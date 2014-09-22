@@ -125,7 +125,7 @@
       </field>
       <field name="roles" mapped-by="privileges">
          <collection element-type="org.apache.sentry.provider.db.service.model.MSentryRole"/>
-      </field>  
+      </field>
     </class>
 
     <class name="MSentryGMPrivilege" identity-type="datastore" table="SENTRY_GM_PRIVILEGE" detachable="true">
