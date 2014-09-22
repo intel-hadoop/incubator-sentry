@@ -174,12 +174,10 @@ public class MSentryRole {
       return false;
     MSentryRole other = (MSentryRole) obj;
     if (roleName == null) {
-      if (other.roleName != null) {
+      if (other.roleName != null)
         return false;
-      }
-    } else if (!roleName.equals(other.roleName)) {
+    } else if (!roleName.equals(other.roleName))
       return false;
-    }
     return true;
   }
 
