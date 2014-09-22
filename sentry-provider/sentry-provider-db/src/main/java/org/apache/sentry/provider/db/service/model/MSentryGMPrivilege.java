@@ -17,8 +17,8 @@ vim  * Licensed to the Apache Software Foundation (ASF) under one
  */
 package org.apache.sentry.provider.db.service.model;
 
-import static org.apache.sentry.provider.common.ProviderConstants.KV_JOINER;
 import static org.apache.sentry.provider.common.ProviderConstants.AUTHORIZABLE_JOINER;
+import static org.apache.sentry.provider.common.ProviderConstants.KV_JOINER;
 
 import java.lang.reflect.Field;
 import java.util.HashSet;
@@ -30,9 +30,8 @@ import javax.jdo.annotations.PersistenceCapable;
 
 import org.apache.sentry.core.common.Authorizable;
 import org.apache.sentry.provider.db.genericModel.service.persistent.HierarchyStore;
-import org.apache.sentry.provider.db.genericModel.service.persistent.SentryStoreBase;
-import org.apache.sentry.provider.db.service.thrift.PolicyStoreConstants;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
 /**
@@ -44,6 +43,7 @@ import com.google.common.collect.Lists;
 public class MSentryGMPrivilege {
   private static final String PREFIX_RESOURCE_NAME = "resourceObject";
   private static final int PRIVILEGE_MAX_LEVEL = 4; // This generic model privilege can support maximum 4 level.
+  private static final String NULL_COL = "__NULL__";
 
   private String serviceName = "";
   private String componentName = "";
@@ -56,10 +56,10 @@ public class MSentryGMPrivilege {
    * resourceObject4 stands for the fourth level.
    * We assume that the generic model privilege for any component(hive/impala or solr) doesn't exceed four level.
    **/
-  private String resourceObject1 = SentryStoreBase.NULL_COL;
-  private String resourceObject2 = SentryStoreBase.NULL_COL;
-  private String resourceObject3 = SentryStoreBase.NULL_COL;
-  private String resourceObject4 = SentryStoreBase.NULL_COL;
+  private String resourceObject1 = NULL_COL;
+  private String resourceObject2 = NULL_COL;
+  private String resourceObject3 = NULL_COL;
+  private String resourceObject4 = NULL_COL;
 
   private Integer hierarchyTag;
   private Boolean grantOption = false;
@@ -209,7 +209,7 @@ public class MSentryGMPrivilege {
       String prefix = PREFIX_RESOURCE_NAME;
       final String resourceObject = (String) getField(this, prefix + String.format("%d", i+1));
       final String hierarchy = hierarchys[i];
-      if (SentryStoreBase.notNULL(resourceObject)) {
+      if (notNULL(resourceObject)) {
         auths.add(new Authorizable() {
           @Override
           public String getTypeName() {
@@ -237,7 +237,7 @@ public class MSentryGMPrivilege {
     this.authorizables = authorizables;
     for (int i = 0; i < authorizables.size(); i++) {
       String prefix = PREFIX_RESOURCE_NAME;
-      setField(this, prefix + String.format("%d", i+1), SentryStoreBase.toNULLCol(authorizables.get(i).getName()));
+      setField(this, prefix + String.format("%d", i+1), toNULLCol(authorizables.get(i).getName()));
     }
   }
 
@@ -340,6 +340,13 @@ public class MSentryGMPrivilege {
       return true;
   }
 
+  public static String toNULLCol(String col) {
+    return Strings.isNullOrEmpty(col) ? NULL_COL : col;
+  }
+
+  public static boolean notNULL(String s) {
+    return !(Strings.isNullOrEmpty(s) || NULL_COL.equals(s));
+  }
 
   @SuppressWarnings("unchecked")
   public static <T> void setField(Object obj, String fieldName, T fieldValue) {
