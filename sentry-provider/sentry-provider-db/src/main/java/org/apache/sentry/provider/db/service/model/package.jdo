@@ -65,6 +65,7 @@
                 <column name="DB_PRIVILEGE_ID"/>
             </element>
       </field>
+
       <field name = "gmPrivileges" table="SENTRY_ROLE_GM_PRIVILEGE_MAP" default-fetch-group="true">
         <collection element-type="org.apache.sentry.provider.db.service.model.MSentryGMPrivilege"/>
             <join>
@@ -74,7 +75,7 @@
                 <column name="GM_PRIVILEGE_ID"/>
             </element>
       </field>
-      
+
       <field name = "groups" table="SENTRY_ROLE_GROUP_MAP" >
         <collection element-type="org.apache.sentry.provider.db.service.model.MSentryGroup"/>
             <join>
@@ -83,9 +84,9 @@
             <element>
                 <column name="GROUP_ID"/>
             </element>
-      </field>  
+      </field>
     </class>
-    
+
     <class name="MSentryPrivilege" identity-type="datastore" table="SENTRY_DB_PRIVILEGE" detachable="true">
       <datastore-identity>
         <column name="DB_PRIVILEGE_ID"/>
@@ -126,7 +127,7 @@
          <collection element-type="org.apache.sentry.provider.db.service.model.MSentryRole"/>
       </field>  
     </class>
-    
+
     <class name="MSentryGMPrivilege" identity-type="datastore" table="SENTRY_GM_PRIVILEGE" detachable="true">
       <datastore-identity>
         <column name="GM_PRIVILEGE_ID"/>
@@ -169,7 +170,7 @@
         <column name="HIERARCHY_TAG" jdbc-type="INTEGER"/>
       </field>
       <field name = "createTime">
-      	<column name = "CREATE_TIME" jdbc-type="BIGINT"/>
+        <column name = "CREATE_TIME" jdbc-type="BIGINT"/>
       </field>
       <field name="grantorPrincipal">
         <column name="GRANTOR_PRINCIPAL" length="4000" jdbc-type="VARCHAR"/>
@@ -178,10 +179,10 @@
         <column name="WITH_GRANT_OPTION" length="1" jdbc-type="CHAR"/>
       </field>
       <field name="roles" mapped-by="gmPrivileges">
-         <collection element-type="org.apache.sentry.provider.db.service.model.MSentryRole"/>
+        <collection element-type="org.apache.sentry.provider.db.service.model.MSentryRole"/>
       </field>
     </class>
-    
+
     <class name="MSentryVersion" table="SENTRY_VERSION" identity-type="datastore" detachable="true">
       <datastore-identity>
         <column name="VER_ID"/>
