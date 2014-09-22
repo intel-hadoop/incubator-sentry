@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.jdo.annotations.NotPersistent;
 import javax.jdo.annotations.PersistenceCapable;
 
 import org.apache.sentry.core.common.Authorizable;
@@ -68,9 +67,6 @@ public class MSentryGMPrivilege {
   private long createTime;
   private String grantorPrincipal;
 
-  @NotPersistent
-  private List<? extends Authorizable> authorizables = null;
-
   public MSentryGMPrivilege() {
     this.roles = new HashSet<MSentryRole>();
   }
@@ -99,7 +95,7 @@ public class MSentryGMPrivilege {
     this.scope = copy.scope;
     this.grantorPrincipal = copy.grantorPrincipal;
     this.createTime = copy.createTime;
-    setAuthorizables(copy.authorizables);
+    setAuthorizables(copy.getAuthorizables());
     this.roles = new HashSet<MSentryRole>();
     for (MSentryRole role : copy.roles) {
       roles.add(role);
@@ -191,26 +187,17 @@ public class MSentryGMPrivilege {
   }
 
   public List<? extends Authorizable> getAuthorizables() {
-    if (authorizables != null) {
+    List<Authorizable> authorizables = Lists.newArrayList();
+    if (hierarchyTag.equals(HierarchyStore.UNSET_HIERARCHY_TAG)) {
       return authorizables;
     }
-    authorizables = getAuthorizablesFromResource();
-    return authorizables;
-  }
-
-  private List<? extends Authorizable> getAuthorizablesFromResource() {
-    List<Authorizable> auths = Lists.newArrayList();
-    if (hierarchyTag.equals(HierarchyStore.UNSET_HIERARCHY_TAG)) {
-      return auths;
-    }
-
     String[] hierarchys = HierarchyStore.getHierarchy(componentName, hierarchyTag);
     for (int i = 0; i < hierarchys.length; i++) {
       String prefix = PREFIX_RESOURCE_NAME;
       final String resourceObject = (String) getField(this, prefix + String.format("%d", i+1));
       final String hierarchy = hierarchys[i];
       if (notNULL(resourceObject)) {
-        auths.add(new Authorizable() {
+        authorizables.add(new Authorizable() {
           @Override
           public String getTypeName() {
             return hierarchy;
@@ -222,19 +209,17 @@ public class MSentryGMPrivilege {
         });
       }
     }
-    return auths;
+    return authorizables;
   }
 
   public void setAuthorizables(List<? extends Authorizable> authorizables) {
     if ((authorizables == null) || (authorizables.isEmpty())) {
-      this.authorizables = Lists.newArrayList();
       return;
     }
     if (authorizables.size() > PRIVILEGE_MAX_LEVEL) {
       throw new IllegalStateException("This generic privilege model only supports maximum 4 level.");
     }
 
-    this.authorizables = authorizables;
     for (int i = 0; i < authorizables.size(); i++) {
       String prefix = PREFIX_RESOURCE_NAME;
       setField(this, prefix + String.format("%d", i+1), toNULLCol(authorizables.get(i).getName()));
@@ -325,14 +310,18 @@ public class MSentryGMPrivilege {
           return false;
       } else if (!hierarchyTag.equals(other.hierarchyTag))
         return false;
-      if (getAuthorizables().size() != other.getAuthorizables().size()) {
+
+      List<? extends Authorizable> authorizables = getAuthorizables();
+      List<? extends Authorizable> other_authorizables = other.getAuthorizables();
+
+      if (authorizables.size() != other_authorizables.size()) {
         return false;
       }
       for (int i = 0; i < authorizables.size(); i++) {
         String o1 = KV_JOINER.join(authorizables.get(i).getTypeName(),
                                          authorizables.get(i).getName());
-        String o2 = KV_JOINER.join(other.authorizables.get(i).getTypeName(),
-            other.authorizables.get(i).getName());
+        String o2 = KV_JOINER.join(other_authorizables.get(i).getTypeName(),
+            other_authorizables.get(i).getName());
         if (!o1.equalsIgnoreCase(o2)) {
           return false;
         }
@@ -348,7 +337,6 @@ public class MSentryGMPrivilege {
     return !(Strings.isNullOrEmpty(s) || NULL_COL.equals(s));
   }
 
-  @SuppressWarnings("unchecked")
   public static <T> void setField(Object obj, String fieldName, T fieldValue) {
     try {
       Class<?> clazz = obj.getClass();
