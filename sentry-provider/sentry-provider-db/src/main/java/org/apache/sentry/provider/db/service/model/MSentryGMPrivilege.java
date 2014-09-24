@@ -224,6 +224,7 @@ public class MSentryGMPrivilege {
 
     for (Authorizable authorizable : getAuthorizables()) {
       result = prime * result + authorizable.getName().hashCode();
+      result = prime * result + authorizable.getTypeName().hashCode();
     }
 
     return result;
