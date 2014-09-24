@@ -14,16 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.sentry.core.model.search;
+package org.apache.sentry.core.common;
 
-import org.apache.sentry.core.common.Authorizable;
-
-public interface SearchModelAuthorizable extends Authorizable {
-
-  public enum AuthorizableType {
-    Collection,
-    Field
-  };
-
-  public AuthorizableType getAuthzType();
+public interface ActionReader {
+  public Action deserialize(String name);
 }

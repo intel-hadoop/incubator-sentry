@@ -14,16 +14,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.sentry.core.model.search;
+package org.apache.sentry.core.common;
 
-import org.apache.sentry.core.common.Authorizable;
+public class BaseAction implements Action{
 
-public interface SearchModelAuthorizable extends Authorizable {
+  private String value;
 
-  public enum AuthorizableType {
-    Collection,
-    Field
-  };
+  public BaseAction(String value) {
+    this.value = value;
+  }
 
-  public AuthorizableType getAuthzType();
+  @Override
+  public String toString() {
+    return value;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == null) {
+      return false;
+    }
+    if (this == obj) {
+      return true;
+    }
+    if (!(obj instanceof Action)) {
+      return false;
+    }
+
+    Action other = (Action)obj;
+    return value.equalsIgnoreCase(other.getValue());
+  }
+
+  @Override
+  public String getValue() {
+    return value;
+  }
+
+  @Override
+  public int hashCode() {
+    return value.hashCode();
+  }
+
 }

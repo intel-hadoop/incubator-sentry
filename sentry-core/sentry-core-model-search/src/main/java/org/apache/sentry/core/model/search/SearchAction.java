@@ -16,14 +16,33 @@
  */
 package org.apache.sentry.core.model.search;
 
-import org.apache.sentry.core.common.Authorizable;
+import org.apache.sentry.core.common.Action;
+import org.apache.sentry.core.common.BaseAction;
+import org.apache.sentry.core.common.CompoundAction;
 
-public interface SearchModelAuthorizable extends Authorizable {
+public enum SearchAction implements Action {
 
-  public enum AuthorizableType {
-    Collection,
-    Field
-  };
+  UPDATE(new BaseAction(SearchConstants.UPDATE)),
+  QUERY(new BaseAction(SearchConstants.QUERY)),
+  ALL(new CompoundAction.Builder()
+      .setName(Action.ALL)
+      .addAction(QUERY)
+      .addAction(UPDATE)
+      .build());
 
-  public AuthorizableType getAuthzType();
+  private Action action;
+
+  private SearchAction(Action action) {
+    this.action = action;
+  }
+
+  public Action getAction() {
+    return action;
+  }
+
+  @Override
+  public String getValue() {
+    return action.getValue();
+  }
+
 }

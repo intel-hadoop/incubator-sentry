@@ -16,14 +16,22 @@
  */
 package org.apache.sentry.core.model.search;
 
-import org.apache.sentry.core.common.Authorizable;
+import org.apache.sentry.core.common.Action;
+import org.apache.sentry.core.common.ActionReader;
 
-public interface SearchModelAuthorizable extends Authorizable {
-
-  public enum AuthorizableType {
-    Collection,
-    Field
-  };
-
-  public AuthorizableType getAuthzType();
+public class SearchActionReader implements ActionReader {
+  @Override
+  public Action deserialize(String name) {
+    Action action = null;
+    for (SearchAction ac : SearchAction.values()) {
+      if (ac.getValue().equalsIgnoreCase(name)) {
+        action = ac.getAction();
+        break;
+      }
+    }
+    if (action == null) {
+      throw new RuntimeException("SearchActionReader can't find action for name=" + name);
+    }
+    return action;
+  }
 }
