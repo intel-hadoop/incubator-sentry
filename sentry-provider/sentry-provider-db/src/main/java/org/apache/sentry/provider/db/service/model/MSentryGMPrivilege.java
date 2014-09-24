@@ -26,10 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.jdo.annotations.PersistenceCapable;
-
 import org.apache.sentry.core.common.Authorizable;
-import org.apache.sentry.provider.db.genericModel.service.persistent.HierarchyStore;
-
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
@@ -40,27 +37,29 @@ import com.google.common.collect.Lists;
  */
 @PersistenceCapable
 public class MSentryGMPrivilege {
-  private static final String PREFIX_RESOURCE_NAME = "resourceObject";
-  private static final int PRIVILEGE_MAX_LEVEL = 4; // This generic model privilege can support maximum 4 level.
+  private static final String PREFIX_RESOURCE_NAME = "resourceName";
+  private static final String PREFIX_RESOURCE_TYPE = "resourceType";
   private static final String NULL_COL = "__NULL__";
+  private static final int AUTHORIABLE_LEVEL = 4;
+  /**
+   * The authorizable List has been stored into resourceName and resourceField columns
+   * We assume that the generic model privilege for any component(hive/impala or solr) doesn't exceed four level.
+   * This generic model privilege currently can support maximum 4 level.
+   **/
+  private String resourceName0 = NULL_COL;
+  private String resourceType0 = NULL_COL;
+  private String resourceName1 = NULL_COL;
+  private String resourceType1 = NULL_COL;
+  private String resourceName2 = NULL_COL;
+  private String resourceType2 = NULL_COL;
+  private String resourceName3 = NULL_COL;
+  private String resourceType3 = NULL_COL;
 
   private String serviceName = "";
   private String componentName = "";
   private String action = "";
   private String scope;
 
-  /**
-   * The resourceObject has the hierarchy structure.
-   * resourceObject1 stands for the first level
-   * resourceObject4 stands for the fourth level.
-   * We assume that the generic model privilege for any component(hive/impala or solr) doesn't exceed four level.
-   **/
-  private String resourceObject1 = NULL_COL;
-  private String resourceObject2 = NULL_COL;
-  private String resourceObject3 = NULL_COL;
-  private String resourceObject4 = NULL_COL;
-
-  private Integer hierarchyTag;
   private Boolean grantOption = false;
   // roles this privilege is a part of
   private Set<MSentryRole> roles;
@@ -80,7 +79,6 @@ public class MSentryGMPrivilege {
     this.grantorPrincipal = grantorPrincipal;
     this.grantOption = grantOption;
     this.scope = scope;
-    this.hierarchyTag = HierarchyStore.getHierarchyTag(componentName, authorizables);
     this.roles = new HashSet<MSentryRole>();
     this.createTime = System.currentTimeMillis();
     setAuthorizables(authorizables);
@@ -91,7 +89,6 @@ public class MSentryGMPrivilege {
     this.componentName = copy.componentName;
     this.serviceName = copy.serviceName;
     this.grantOption = copy.grantOption;
-    this.hierarchyTag = copy.hierarchyTag;
     this.scope = copy.scope;
     this.grantorPrincipal = copy.grantorPrincipal;
     this.createTime = copy.createTime;
@@ -166,45 +163,22 @@ public class MSentryGMPrivilege {
     this.scope = scope;
   }
 
-  public String getResourceObject1() {
-    return resourceObject1;
-  }
-
-  public String getResourceObject2() {
-    return resourceObject2;
-  }
-
-  public String getResourceObject3() {
-    return resourceObject3;
-  }
-
-  public String getResourceObject4() {
-    return resourceObject4;
-  }
-
-  public Integer getHierarchyTag() {
-    return hierarchyTag;
-  }
-
   public List<? extends Authorizable> getAuthorizables() {
     List<Authorizable> authorizables = Lists.newArrayList();
-    if (hierarchyTag.equals(HierarchyStore.UNSET_HIERARCHY_TAG)) {
-      return authorizables;
-    }
-    String[] hierarchys = HierarchyStore.getHierarchy(componentName, hierarchyTag);
-    for (int i = 0; i < hierarchys.length; i++) {
-      String prefix = PREFIX_RESOURCE_NAME;
-      final String resourceObject = (String) getField(this, prefix + String.format("%d", i+1));
-      final String hierarchy = hierarchys[i];
-      if (notNULL(resourceObject)) {
+    //construct atuhorizable lists
+    for (int i = 0; i < AUTHORIABLE_LEVEL; i++) {
+      final String resourceName = (String) getField(this, PREFIX_RESOURCE_NAME + String.valueOf(i));
+      final String resourceTYpe = (String) getField(this, PREFIX_RESOURCE_TYPE + String.valueOf(i));
+
+      if (notNULL(resourceName) && notNULL(resourceTYpe)) {
         authorizables.add(new Authorizable() {
           @Override
           public String getTypeName() {
-            return hierarchy;
+            return resourceTYpe;
           }
           @Override
           public String getName() {
-            return resourceObject;
+            return resourceName;
           }
         });
       }
@@ -216,13 +190,13 @@ public class MSentryGMPrivilege {
     if ((authorizables == null) || (authorizables.isEmpty())) {
       return;
     }
-    if (authorizables.size() > PRIVILEGE_MAX_LEVEL) {
+    if (authorizables.size() > AUTHORIABLE_LEVEL) {
       throw new IllegalStateException("This generic privilege model only supports maximum 4 level.");
     }
 
     for (int i = 0; i < authorizables.size(); i++) {
-      String prefix = PREFIX_RESOURCE_NAME;
-      setField(this, prefix + String.format("%d", i+1), toNULLCol(authorizables.get(i).getName()));
+      setField(this, PREFIX_RESOURCE_NAME + String.valueOf(i), toNULLCol(authorizables.get(i).getName()));
+      setField(this, PREFIX_RESOURCE_TYPE + String.valueOf(i), toNULLCol(authorizables.get(i).getTypeName()));
     }
   }
 
@@ -247,7 +221,6 @@ public class MSentryGMPrivilege {
     result = prime * result + ((serviceName == null) ? 0 : serviceName.hashCode());
     result = prime * result + ((grantOption == null) ? 0 : grantOption.hashCode());
     result = prime * result + ((scope == null) ? 0 : scope.hashCode());
-    result = prime * result + ((hierarchyTag == null) ? 0 : hierarchyTag);
 
     for (Authorizable authorizable : getAuthorizables()) {
       result = prime * result + authorizable.getName().hashCode();
@@ -305,11 +278,6 @@ public class MSentryGMPrivilege {
           return false;
       } else if (!grantOption.equals(other.grantOption))
         return false;
-      if (hierarchyTag == null) {
-        if (other.hierarchyTag != null)
-          return false;
-      } else if (!hierarchyTag.equals(other.hierarchyTag))
-        return false;
 
       List<? extends Authorizable> authorizables = getAuthorizables();
       List<? extends Authorizable> other_authorizables = other.getAuthorizables();
@@ -358,5 +326,70 @@ public class MSentryGMPrivilege {
     } catch (Exception e) {
       throw new RuntimeException("getField error: " + e.getMessage(), e);
     }
+  }
+
+  /**
+   * get the filter include all fields of MSentryGMPrivilege
+   * @param privilege
+   * @return filter
+   */
+  public static String getEntireFilter(MSentryGMPrivilege privilege) {
+    StringBuilder entireFilter = new StringBuilder();
+    entireFilter.append("serviceName == \"" + toNULLCol(privilege.getServiceName()) + "\" ");
+    entireFilter.append("&& componentName == \"" + toNULLCol(privilege.getComponentName()) + "\" ");
+    entireFilter.append("&& scope == \"" + toNULLCol(privilege.getScope()) + "\" ");
+    entireFilter.append("&& action == \"" + toNULLCol(privilege.getAction()) + "\"");
+    if (privilege.getGrantOption() == null) {
+      entireFilter.append("&& this.grantOption == null ");
+    } else if (privilege.getGrantOption()) {
+      entireFilter.append("&& grantOption ");
+    } else {
+      entireFilter.append("&& !grantOption ");
+    }
+    List<? extends Authorizable> authorizables = privilege.getAuthorizables();
+    for (int i = 0; i < AUTHORIABLE_LEVEL; i++) {
+      String resourceName = PREFIX_RESOURCE_NAME + String.valueOf(i);
+      String resourceType = PREFIX_RESOURCE_TYPE + String.valueOf(i);
+
+      if (i >= authorizables.size()) {
+        entireFilter.append("&& " + resourceName + " == \"" + NULL_COL + "\" ");
+        entireFilter.append("&& " + resourceType + " == \"" + NULL_COL + "\" ");
+      } else {
+        entireFilter.append("&& " + resourceName + " == \"" + authorizables.get(i).getName() + "\" ");
+        entireFilter.append("&& " + resourceType + " == \"" + authorizables.get(i).getTypeName() + "\" ");
+      }
+    }
+    return entireFilter.toString();
+  }
+
+  /**
+   * get the filter include partial fields of MSentryGMPrivilege
+   * @param privilege
+   * @return filter
+   */
+  public static String getPartialFilter(MSentryGMPrivilege privilege) {
+    StringBuilder partialFilter = new StringBuilder();
+    partialFilter.append("serviceName == \"" + toNULLCol(privilege.getServiceName()) + "\" ");
+    partialFilter.append("&& componentName == \"" + toNULLCol(privilege.getComponentName()) + "\" ");
+
+    if (privilege.getGrantOption() != null) {
+      if (privilege.getGrantOption()) {
+        partialFilter.append("&& grantOption ");
+      } else {
+        partialFilter.append("&& !grantOption ");
+      }
+    }
+
+    List<? extends Authorizable> authorizables = privilege.getAuthorizables();
+    for (int i = 0; i < AUTHORIABLE_LEVEL; i++) {
+      String resourceName = PREFIX_RESOURCE_NAME + String.valueOf(i);
+      String resourceType = PREFIX_RESOURCE_TYPE + String.valueOf(i);
+      if (i < authorizables.size()) {
+        partialFilter.append("&& " + resourceName + " == \"" + authorizables.get(i).getName() + "\" ");
+        partialFilter.append("&& " + resourceType + " == \"" + authorizables.get(i).getTypeName() + "\" ");
+      }
+    }
+
+    return partialFilter.toString();
   }
 }

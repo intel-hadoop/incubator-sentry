@@ -135,39 +135,52 @@
     <index name="GM_PRIVILEGE_INDEX" unique="true">
         <field name="componentName"/>
         <field name="serviceName"/>
-        <field name="resourceObject1"/>
-        <field name="resourceObject2"/>
-        <field name="resourceObject3"/>
-        <field name="resourceObject4"/>
+        <field name="resourceName0"/>
+        <field name="resourceType0"/>
+        <field name="resourceName1"/>
+        <field name="resourceType1"/>
+        <field name="resourceName2"/>
+        <field name="resourceType2"/>
+        <field name="resourceName3"/>
+        <field name="resourceType3"/>
         <field name="action"/>
         <field name="grantOption"/>
 	  </index>
       <field name="componentName">
-        <column name="COMPONENT_NAME" length="40" jdbc-type="VARCHAR"/>
+        <column name="COMPONENT_NAME" length="50" jdbc-type="VARCHAR"/>
       </field>
       <field name="serviceName">
-        <column name="SERVICE_NAME" length="4000" jdbc-type="VARCHAR"/>
+        <column name="SERVICE_NAME" length="100" jdbc-type="VARCHAR"/>
       </field>
-      <field name="resourceObject1">
-        <column name="RESOURCE_NAME_1" length="4000" jdbc-type="VARCHAR"/>
+      <field name="resourceName0">
+        <column name="RESOURCE_NAME_0" length="50" jdbc-type="VARCHAR"/>
       </field>
-      <field name="resourceObject2">
-        <column name="RESOURCE_NAME_2" length="4000" jdbc-type="VARCHAR"/>
+      <field name="resourceType0">
+        <column name="RESOURCE_TYPE_0" length="50" jdbc-type="VARCHAR"/>
       </field>
-      <field name="resourceObject3">
-        <column name="RESOURCE_NAME_3" length="4000" jdbc-type="VARCHAR"/>
+      <field name="resourceName1">
+        <column name="RESOURCE_NAME_1" length="50" jdbc-type="VARCHAR"/>
       </field>
-      <field name="resourceObject4">
-        <column name="RESOURCE_NAME_4" length="4000" jdbc-type="VARCHAR"/>
+      <field name="resourceType1">
+        <column name="RESOURCE_TYPE_1" length="50" jdbc-type="VARCHAR"/>
+      </field>
+      <field name="resourceName2">
+        <column name="RESOURCE_NAME_2" length="50" jdbc-type="VARCHAR"/>
+      </field>
+      <field name="resourceType2">
+        <column name="RESOURCE_TYPE_2" length="50" jdbc-type="VARCHAR"/>
+      </field>
+      <field name="resourceName3">
+        <column name="RESOURCE_NAME_3" length="50" jdbc-type="VARCHAR"/>
+      </field>
+      <field name="resourceType3">
+        <column name="RESOURCE_TYPE_3" length="50" jdbc-type="VARCHAR"/>
       </field>
       <field name="action">
-        <column name="ACTION" length="40" jdbc-type="VARCHAR"/>
+        <column name="ACTION" length="50" jdbc-type="VARCHAR"/>
       </field>
       <field name="scope">
-        <column name="SCOPE" length="40" jdbc-type="VARCHAR"/>
-      </field>
-      <field name="hierarchyTag">
-        <column name="HIERARCHY_TAG" jdbc-type="INTEGER"/>
+        <column name="SCOPE" length="50" jdbc-type="VARCHAR"/>
       </field>
       <field name = "createTime">
         <column name = "CREATE_TIME" jdbc-type="BIGINT"/>
