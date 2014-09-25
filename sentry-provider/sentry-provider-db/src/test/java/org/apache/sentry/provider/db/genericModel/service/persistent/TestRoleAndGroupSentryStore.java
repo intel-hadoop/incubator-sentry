@@ -19,6 +19,7 @@ package org.apache.sentry.provider.db.genericModel.service.persistent;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
 
 import java.util.Set;
 import org.apache.hadoop.conf.Configuration;
@@ -48,20 +49,18 @@ public class TestRoleAndGroupSentryStore extends SentryStoreIntegrationBase{
     String roleName2 = "TeSt";
     String grantor = "grantor";
     sentryStore.createSentryRole(roleName1, grantor);
-    boolean alreadyExist = false;
     try {
       sentryStore.createSentryRole(roleName2, grantor);
+      fail("SentryAlreadyExistsException should have been thrown");
     } catch (SentryAlreadyExistsException e) {
-      alreadyExist = true;
+      //ignore the exception
     }
-    assertTrue(alreadyExist);
-    boolean noExist = false;
+
     try {
       sentryStore.dropSentryRole(roleName2, grantor);
     } catch (SentryNoSuchObjectException e) {
-      noExist = true;
+      fail("SentryNoSuchObjectException shouldn't have been thrown");
     }
-    assertTrue(!noExist);
   }
 
   @Test(expected=SentryAlreadyExistsException.class)

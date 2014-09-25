@@ -19,10 +19,10 @@ package org.apache.sentry.provider.db.genericModel.service.persistent;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.sentry.core.common.Authorizable;
@@ -260,52 +260,46 @@ public class TestSearchPrivilegeSentryStore extends SentryStoreIntegrationBase {
     /**
      * the user with grant option grant query privilege to rolr r3
      */
-    boolean isGrantOptionException = false;
     try{
       sentryStore.alterSentryRoleGrantPrivilege(roleName3, queryPrivilege1,
           GRANT_OPTION_USER);
     } catch (SentryGrantDeniedException e) {
-      isGrantOptionException = true;
+      fail("SentryGrantDeniedException shouldn't have been thrown");
     }
-    assertTrue(!isGrantOptionException);
 
     /**
      * the user with grant option revoke query privilege to rolr r3
      */
-    isGrantOptionException = false;
     try{
       sentryStore.alterSentryRoleRevokePrivilege(roleName3, queryPrivilege1,
           GRANT_OPTION_USER);
     } catch (SentryGrantDeniedException e) {
-      isGrantOptionException = true;
+      fail("SentryGrantDeniedException shouldn't have been thrown");
     }
-    assertTrue(!isGrantOptionException);
 
     /**
      * the user with no grant option grant query privilege to rolr r3, it will
      * throw SentryGrantDeniedException
      */
-    isGrantOptionException = false;
     try {
       sentryStore.alterSentryRoleGrantPrivilege(roleName3, queryPrivilege2,
           NO_GRANT_OPTION_USER);
+      fail("SentryGrantDeniedException should have been thrown");
     } catch (SentryGrantDeniedException e) {
-      isGrantOptionException = true;
+      //ignore the exception
     }
-    assertTrue(isGrantOptionException);
 
     /**
      * the user with no grant option revoke query privilege to rolr r3, it will
      * throw SentryGrantDeniedException
      */
-    isGrantOptionException = false;
     try {
       sentryStore.alterSentryRoleGrantPrivilege(roleName3, queryPrivilege2,
           NO_GRANT_OPTION_USER);
+      fail("SentryGrantDeniedException should have been thrown");
     } catch (SentryGrantDeniedException e) {
-      isGrantOptionException = true;
+      //ignore the exception
     }
-    assertTrue(isGrantOptionException);
   }
 
   @Test
