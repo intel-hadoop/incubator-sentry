@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 package org.apache.sentry.provider.db.genericModel.service.persistent;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -486,33 +487,6 @@ public abstract class SentryStoreBase implements SentryStoreLayer {
     }
   }
 
-  //@Override
-  /*public Set<? extends RoleReader> getRolesByGroupNames(Set<String> groupNames) {
-    Preconditions.checkNotNull(groupNames);
-    groupNames = toTrimedLower(groupNames);
-
-    Set<RoleReader> roleReaders = Sets.newHashSet();
-    PersistenceManager pm = null;
-    try{
-      pm = openTransaction();
-      Set<String> roleNames = getRoleNamesByGroupNames(groupNames, pm);
-      for (String roleName : roleNames) {
-        MSentryRole role  = getRole(roleName, pm);
-        if (role != null) {
-          RoleReader roleReader = new Builder()
-                                  .setRoleName(roleName)
-                                  .setGroups(getGroupsByRoleNames(Sets.newHashSet(roleName)))
-                                  .setPrivileges(getPrivilegesByRole(roleNames, pm))
-                                  .build();
-          roleReaders.add(roleReader);
-        }
-      }
-      return roleReaders;
-    } finally {
-      commitTransaction(pm);
-    }
-  }*/
-
   @Override
   public Set<String> getRolesByGroupNames(Set<String> groupNames) {
     Preconditions.checkNotNull(groupNames);
@@ -604,6 +578,8 @@ public abstract class SentryStoreBase implements SentryStoreLayer {
       List<? extends Authorizable> authorizables) throws SentryUserException {
     Preconditions.checkNotNull(component);
     Preconditions.checkNotNull(service);
+    component = toTrimedLower(component);
+    service = toTrimedLower(service);
 
     Set<PrivilegeObject> privileges = Sets.newHashSet();
     PersistenceManager pm = null;
@@ -724,8 +700,10 @@ public abstract class SentryStoreBase implements SentryStoreLayer {
     Preconditions.checkNotNull(newAuthorizables);
 
     if (oldAuthorizables.size() != newAuthorizables.size()) {
-      throw new SentryAccessDeniedException("rename privilege denied: the size of oldAuthorizables" +
-            " must equals the newAuthorizables");
+      throw new SentryAccessDeniedException(
+          "rename privilege denied: the size of oldAuthorizables must equals the newAuthorizables "
+              + "oldAuthorizables:" + Arrays.toString(oldAuthorizables.toArray()) + " "
+              + "newAuthorizables:" + Arrays.toString(newAuthorizables.toArray()));
     }
 
     PersistenceManager pm = null;
