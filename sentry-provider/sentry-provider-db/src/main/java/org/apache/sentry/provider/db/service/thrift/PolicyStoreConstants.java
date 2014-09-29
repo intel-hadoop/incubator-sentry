@@ -18,7 +18,9 @@
 package org.apache.sentry.provider.db.service.thrift;
 
 public class PolicyStoreConstants {
-
+  public static final String SENTRY_POLICY_STORE = "sentry.policy.store";
+  public static final String SENTRY_DEFAULT_POLICY_STORE = "org.apache.sentry.provider.db.genericModel.service.persistent." +
+                                                           "GMPrivilegeSentryStore";
   public static class PolicyStoreServerConfig {
     public static final String NOTIFICATION_HANDLERS = "sentry.policy.store.notification.handlers";
   }
