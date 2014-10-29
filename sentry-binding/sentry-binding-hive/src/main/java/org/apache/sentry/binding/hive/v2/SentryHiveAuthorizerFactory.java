@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.sentry.binding.v2;
+package org.apache.sentry.binding.hive.v2;
 
 import java.lang.reflect.Constructor;
 
@@ -25,9 +25,10 @@ import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveAuthorizer;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveAuthorizerFactory;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveAuthzPluginException;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveMetastoreClientFactory;
-import org.apache.sentry.binding.v2.impl.DefaultSentryAccessController;
-import org.apache.sentry.binding.v2.impl.DefaultSentryAuthorizationValidator;
-import org.apache.sentry.binding.v2.impl.SentryAuthorizerImpl;
+import org.apache.sentry.binding.hive.conf.HiveAuthzConf;
+import org.apache.sentry.binding.hive.v2.impl.DefaultSentryAccessController;
+import org.apache.sentry.binding.hive.v2.impl.DefaultSentryAuthorizationValidator;
+import org.apache.sentry.binding.hive.v2.impl.SentryAuthorizerImpl;
 
 public class SentryHiveAuthorizerFactory implements HiveAuthorizerFactory {
   public static String HIVE_SENTRY_ACCESS_CONTROLLER =
@@ -40,6 +41,18 @@ public class SentryHiveAuthorizerFactory implements HiveAuthorizerFactory {
       HiveConf conf, HiveAuthenticationProvider authenticator) throws HiveAuthzPluginException {
     SentryAccessController accessController = getAccessController(conf, authenticator);
     SentryAuthorizationValidator authzValidator = getAuthzController(conf, authenticator);
+
+    return new SentryAuthorizerImpl(accessController, authzValidator);
+  }
+
+  /**
+   * just for testing
+   */
+  public HiveAuthorizer createHiveAuthorizer(HiveMetastoreClientFactory metastoreClientFactory,
+      HiveConf conf, HiveAuthzConf authzConf, HiveAuthenticationProvider authenticator)
+          throws HiveAuthzPluginException {
+    SentryAccessController accessController = getAccessController(conf, authenticator);
+    SentryAuthorizationValidator authzValidator = getAuthzController(conf, authzConf, authenticator);
 
     return new SentryAuthorizerImpl(accessController, authzValidator);
   }
@@ -101,6 +114,40 @@ public class SentryHiveAuthorizerFactory implements HiveAuthorizerFactory {
       Constructor<? extends SentryAuthorizationValidator> constructor =
           clazz.getConstructor(HiveConf.class, HiveAuthenticationProvider.class);
       authzController = (SentryAuthorizationValidator) constructor.newInstance(conf, authenticator);
+    } catch (Exception e) {
+      throw new HiveAuthzPluginException(e);
+    }
+
+    return authzController;
+  }
+
+  /**
+   * Get instance of SentryAuthorizationValidator from configuration
+   * Default return DefaultSentryAuthorizationValidator
+   *
+   * @param conf
+   * @param authenticator
+   * @param authzConf
+   * @throws HiveAuthzPluginException
+   */
+  public static SentryAuthorizationValidator getAuthzController(HiveConf conf, HiveAuthzConf authzConf,
+      HiveAuthenticationProvider authenticator) throws HiveAuthzPluginException {
+    String name = HIVE_SENTRY_AUTHORIZATION_CONTROLLER;
+    Class<? extends SentryAuthorizationValidator> clazz = conf.getClass(name,
+        DefaultSentryAuthorizationValidator.class, SentryAuthorizationValidator.class);
+
+    if (clazz == null) {
+      // should not happen as default value is set
+      throw new HiveAuthzPluginException("Configuration value " + name
+          + " is not set to valid SentryAuthorizationValidator subclass");
+    }
+
+    SentryAuthorizationValidator authzController = null;
+    try {
+      Constructor<? extends SentryAuthorizationValidator> constructor =
+          clazz.getConstructor(HiveConf.class, HiveAuthzConf.class, HiveAuthenticationProvider.class);
+      authzController = (SentryAuthorizationValidator)
+          constructor.newInstance(conf, authzConf, authenticator);
     } catch (Exception e) {
       throw new HiveAuthzPluginException(e);
     }

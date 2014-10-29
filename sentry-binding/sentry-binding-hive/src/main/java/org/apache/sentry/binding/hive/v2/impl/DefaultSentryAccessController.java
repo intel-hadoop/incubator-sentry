@@ -15,10 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.sentry.binding.v2.impl;
+package org.apache.sentry.binding.hive.v2.impl;
 
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.security.HiveAuthenticationProvider;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrincipal;
@@ -26,9 +28,10 @@ import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrivilege;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrivilegeInfo;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrivilegeObject;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveRoleGrant;
-import org.apache.sentry.binding.v2.SentryAccessController;
+import org.apache.sentry.binding.hive.v2.SentryAccessController;
 
 public class DefaultSentryAccessController extends SentryAccessController {
+  public static final Log LOG = LogFactory.getLog(DefaultSentryAccessController.class);
 
   public DefaultSentryAccessController(HiveConf conf,
       HiveAuthenticationProvider authenticator) {

@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.sentry.binding.v2.impl;
+package org.apache.sentry.binding.hive.v2.impl;
 
 import java.util.List;
 
@@ -29,8 +29,8 @@ import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrivilege;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrivilegeInfo;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrivilegeObject;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveRoleGrant;
-import org.apache.sentry.binding.v2.SentryAccessController;
-import org.apache.sentry.binding.v2.SentryAuthorizationValidator;
+import org.apache.sentry.binding.hive.v2.SentryAccessController;
+import org.apache.sentry.binding.hive.v2.SentryAuthorizationValidator;
 
 /**
  * Convenience implementation of HiveAuthorizer.
