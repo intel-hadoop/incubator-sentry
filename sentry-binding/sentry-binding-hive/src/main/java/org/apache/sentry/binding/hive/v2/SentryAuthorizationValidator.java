@@ -22,7 +22,6 @@ import java.util.List;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.security.HiveAuthenticationProvider;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveAuthorizationValidator;
-import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveAuthzPluginException;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveOperationType;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrivilegeObject;
 import org.apache.sentry.binding.hive.authz.HiveAuthzBinding;
@@ -30,6 +29,8 @@ import org.apache.sentry.binding.hive.authz.HiveAuthzBinding.HiveHook;
 import org.apache.sentry.binding.hive.conf.HiveAuthzConf;
 import org.apache.sentry.binding.hive.v2.util.SentryAccessControlException;
 import org.apache.sentry.binding.hive.v2.util.SentryAuthorizerUtil;
+
+import com.google.common.base.Preconditions;
 
 /**
  * Abstract class used to do authorization.
@@ -61,9 +62,8 @@ public abstract class SentryAuthorizationValidator implements HiveAuthorizationV
    */
   protected void initilize(HiveHook hiveHook, HiveConf conf, HiveAuthzConf authzConf,
       HiveAuthenticationProvider authenticator) throws Exception {
-    if(conf == null) {
-      throw new HiveAuthzPluginException("Session HiveConf is null");
-    }
+    Preconditions.checkNotNull(conf, "Session HiveConf cannot be null");
+    Preconditions.checkNotNull(authenticator, "Hive authenticator provider cannot be null");
     this.authenticator = authenticator;
     if (authzConf == null) {
       authzConf = SentryAuthorizerUtil.loadAuthzConf(conf);
