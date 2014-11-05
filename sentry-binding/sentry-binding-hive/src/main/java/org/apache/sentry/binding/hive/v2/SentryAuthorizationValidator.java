@@ -19,16 +19,13 @@ package org.apache.sentry.binding.hive.v2;
 
 import java.util.List;
 
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.security.HiveAuthenticationProvider;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveAuthorizationValidator;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveOperationType;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrivilegeObject;
 import org.apache.sentry.binding.hive.authz.HiveAuthzBinding;
-import org.apache.sentry.binding.hive.authz.HiveAuthzBinding.HiveHook;
 import org.apache.sentry.binding.hive.conf.HiveAuthzConf;
 import org.apache.sentry.binding.hive.v2.util.SentryAccessControlException;
-import org.apache.sentry.binding.hive.v2.util.SentryAuthorizerUtil;
 
 import com.google.common.base.Preconditions;
 
@@ -42,33 +39,22 @@ public abstract class SentryAuthorizationValidator implements HiveAuthorizationV
   protected HiveAuthenticationProvider authenticator;
   protected String currentUserName;
 
-  public SentryAuthorizationValidator(HiveHook hiveHook, HiveConf conf, HiveAuthzConf authzConf,
+  public SentryAuthorizationValidator(HiveAuthzConf authzConf, HiveAuthzBinding hiveAuthzBinding,
       HiveAuthenticationProvider authenticator) throws Exception {
-    initilize(hiveHook, conf, authzConf, authenticator);
-  }
-
-  public SentryAuthorizationValidator(HiveConf conf, HiveAuthzConf authzConf,
-      HiveAuthenticationProvider authenticator) throws Exception {
-    initilize(HiveHook.HiveServer2, conf, authzConf, authenticator);
-  }
-
-  public SentryAuthorizationValidator(HiveConf conf, HiveAuthenticationProvider authenticator)
-      throws Exception {
-    initilize(HiveHook.HiveServer2, conf, null, authenticator);
+    initilize(authzConf, hiveAuthzBinding, authenticator);
   }
 
   /**
    * initialize authenticator and hiveAuthzBinding.
    */
-  protected void initilize(HiveHook hiveHook, HiveConf conf, HiveAuthzConf authzConf,
+  protected void initilize(HiveAuthzConf authzConf, HiveAuthzBinding hiveAuthzBinding,
       HiveAuthenticationProvider authenticator) throws Exception {
-    Preconditions.checkNotNull(conf, "Session HiveConf cannot be null");
+    Preconditions.checkNotNull(authzConf, "HiveAuthzConf cannot be null");
+    Preconditions.checkNotNull(authzConf, "HiveAuthzBinding cannot be null");
     Preconditions.checkNotNull(authenticator, "Hive authenticator provider cannot be null");
+    this.authzConf = authzConf;
+    this.hiveAuthzBinding = hiveAuthzBinding;
     this.authenticator = authenticator;
-    if (authzConf == null) {
-      authzConf = SentryAuthorizerUtil.loadAuthzConf(conf);
-    }
-    hiveAuthzBinding = new HiveAuthzBinding(hiveHook, conf, authzConf);
     initUserRoles();
   }
 

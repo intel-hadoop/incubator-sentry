@@ -27,7 +27,14 @@ import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrivilege;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrivilegeInfo;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrivilegeObject;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveRoleGrant;
+import org.apache.sentry.binding.hive.authz.HiveAuthzBinding;
+import org.apache.sentry.binding.hive.conf.HiveAuthzConf;
+import org.apache.sentry.binding.hive.conf.HiveAuthzConf.AuthzConfVars;
 import org.apache.sentry.binding.hive.v2.util.SentryAccessControlException;
+import org.apache.sentry.provider.db.service.thrift.SentryPolicyServiceClient;
+import org.apache.sentry.service.thrift.SentryServiceClientFactory;
+
+import com.google.common.base.Preconditions;
 
 /**
  * Abstract class to do access control commands,
@@ -35,18 +42,49 @@ import org.apache.sentry.binding.hive.v2.util.SentryAccessControlException;
  */
 public abstract class SentryAccessController implements HiveAccessController {
 
-  private final HiveAuthenticationProvider authenticator;
-  private String currentUserName;
+  private HiveAuthenticationProvider authenticator;
+  protected String currentUserName;
+  protected String serverName;
+  protected SentryServiceClientFactory sentryClientFactory;
+  protected SentryPolicyServiceClient sentryClient;
+  protected HiveAuthzBinding hiveAuthzBinding;
+  protected HiveAuthzConf authzConf;
 
-  public SentryAccessController(HiveConf conf, HiveAuthenticationProvider authenticator) {
+  public SentryAccessController(HiveAuthzConf authzConf,
+      HiveAuthzBinding hiveAuthzBinding,
+      HiveAuthenticationProvider authenticator) throws Exception {
+    this(authzConf, hiveAuthzBinding, authenticator, new SentryServiceClientFactory());
+  }
+
+  public SentryAccessController(HiveAuthzConf authzConf,
+      HiveAuthzBinding hiveAuthzBinding,
+      HiveAuthenticationProvider authenticator,
+      SentryServiceClientFactory sentryClientFactory) throws Exception {
+    initilize(authzConf, hiveAuthzBinding, authenticator, sentryClientFactory);
+  }
+
+  /**
+   * initialize authenticator and hiveAuthzBinding.
+   */
+  protected void initilize(HiveAuthzConf authzConf,
+      HiveAuthzBinding hiveAuthzBinding,
+      HiveAuthenticationProvider authenticator,
+      SentryServiceClientFactory sentryClientFactory) throws Exception {
+    Preconditions.checkNotNull(authzConf, "HiveAuthzConf cannot be null");
+    Preconditions.checkNotNull(authzConf, "HiveAuthzBinding cannot be null");
+    Preconditions.checkNotNull(authenticator, "Hive authenticator provider cannot be null");
+    Preconditions.checkNotNull(sentryClientFactory, "SentryServiceClientFactory cannot be null");
+    this.authzConf = authzConf;
+    this.hiveAuthzBinding = hiveAuthzBinding;
     this.authenticator = authenticator;
-    initUserRoles();
+    this.sentryClientFactory = sentryClientFactory;
+    initUserRoles(authzConf);
   }
 
   /**
    * (Re-)initialize currentUserName or currentRoleName if necessary.
    */
-  private void initUserRoles() {
+  private void initUserRoles(HiveAuthzConf authzConf) {
     // to aid in testing through .q files, authenticator is passed as argument to
     // the interface. this helps in being able to switch the user within a session.
     // so we need to check if the user has changed
@@ -56,6 +94,8 @@ public abstract class SentryAccessController implements HiveAccessController {
       return;
     }
     this.currentUserName = newUserName;
+    serverName = Preconditions.checkNotNull(authzConf.get(AuthzConfVars.AUTHZ_SERVER_NAME.getVar()),
+        "Config " + AuthzConfVars.AUTHZ_SERVER_NAME.getVar() + " is required");
   }
 
   @Override

@@ -31,6 +31,7 @@ import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrivilegeInfo
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrivilegeObject;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveRoleGrant;
 import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.sentry.binding.hive.authz.HiveAuthzBinding;
 import org.apache.sentry.binding.hive.conf.HiveAuthzConf;
 import org.apache.sentry.binding.hive.conf.HiveAuthzConf.AuthzConfVars;
 import org.apache.sentry.binding.hive.v2.util.SentryAccessControlException;
@@ -82,9 +83,9 @@ public class TestSentryHiveAuthorizerFactory {
 
   static class TestSentryAccessController extends SentryAccessController {
 
-    public TestSentryAccessController(HiveConf conf,
-        HiveAuthenticationProvider authenticator) {
-      super(conf, authenticator);
+    public TestSentryAccessController(HiveAuthzConf authzConf, HiveAuthzBinding hiveAuthzBinding,
+        HiveAuthenticationProvider authenticator) throws Exception {
+      super(authzConf, hiveAuthzBinding, authenticator);
     }
 
     @Override
@@ -162,14 +163,9 @@ public class TestSentryHiveAuthorizerFactory {
 
   static class TestSentryAuthorizationValidator extends SentryAuthorizationValidator {
 
-    public TestSentryAuthorizationValidator(HiveConf conf,
+    public TestSentryAuthorizationValidator(HiveAuthzConf authzConf, HiveAuthzBinding hiveAuthzBinding,
         HiveAuthenticationProvider authenticator) throws Exception {
-      super(conf, authenticator);
-    }
-
-    public TestSentryAuthorizationValidator(HiveConf conf, HiveAuthzConf authzConf,
-        HiveAuthenticationProvider authenticator) throws Exception {
-      super(conf, authzConf, authenticator);
+      super(authzConf, hiveAuthzBinding, authenticator);
     }
 
     @Override

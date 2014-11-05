@@ -27,6 +27,7 @@ import org.apache.hadoop.hive.ql.plan.HiveOperation;
 import org.apache.hadoop.hive.ql.security.HiveAuthenticationProvider;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveOperationType;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrivilegeObject;
+import org.apache.sentry.binding.hive.authz.HiveAuthzBinding;
 import org.apache.sentry.binding.hive.authz.HiveAuthzBinding.HiveHook;
 import org.apache.sentry.binding.hive.authz.HiveAuthzPrivileges;
 import org.apache.sentry.binding.hive.authz.HiveAuthzPrivilegesMap;
@@ -41,19 +42,19 @@ public class DefaultSentryAuthorizationValidator extends SentryAuthorizationVali
 
   public static final Log LOG = LogFactory.getLog(DefaultSentryAuthorizationValidator.class);
 
-  public DefaultSentryAuthorizationValidator(HiveConf conf, HiveAuthenticationProvider authenticator)
-      throws Exception {
-    super(conf, authenticator);
-  }
-
-  public DefaultSentryAuthorizationValidator(HiveConf conf, HiveAuthzConf authzConf,
+  public DefaultSentryAuthorizationValidator(HiveAuthzConf authzConf, HiveAuthzBinding hiveAuthzBinding,
       HiveAuthenticationProvider authenticator) throws Exception {
-    super(conf, authzConf, authenticator);
+    super(authzConf, hiveAuthzBinding, authenticator);
   }
 
   public DefaultSentryAuthorizationValidator(HiveHook hiveHook, HiveConf conf, HiveAuthzConf authzConf,
       HiveAuthenticationProvider authenticator) throws Exception {
-    super(hiveHook, conf, authzConf, authenticator);
+    this(authzConf, new HiveAuthzBinding(hiveHook, conf, authzConf), authenticator);
+  }
+
+  public DefaultSentryAuthorizationValidator(HiveConf conf, HiveAuthzConf authzConf,
+      HiveAuthenticationProvider authenticator) throws Exception {
+    this(HiveHook.HiveServer2, conf, authzConf, authenticator);
   }
 
   @Override
