@@ -39,6 +39,7 @@ import org.apache.sentry.binding.hive.HiveAuthzBindingPreExecHook;
 import org.apache.sentry.binding.hive.authz.HiveAuthzBinding;
 import org.apache.sentry.binding.hive.conf.HiveAuthzConf;
 import org.apache.sentry.binding.hive.v2.SentryAccessController;
+import org.apache.sentry.binding.hive.v2.util.SentryAccessControlException;
 import org.apache.sentry.binding.hive.v2.util.SentryAuthorizerUtil;
 import org.apache.sentry.core.common.Authorizable;
 import org.apache.sentry.core.model.db.PrivilegeInfo;
@@ -103,15 +104,17 @@ public class DefaultSentryAccessController extends SentryAccessController {
         this.sentryClient = sentryClientFactory.createV2(authzConf);
       } catch (Exception e) {
         String msg = "Error creating Sentry client V2: " + e.getMessage();
-        throw new RuntimeException(msg, e);
+        throw new SentryAccessControlException(msg, e);
       }
       sentryClient.createRole(currentUserName, roleName);
     } catch(SentryUserException e) {
-      String msg = "Error processing Sentry command: " + e.getMessage();
+      String msg = "Error when sentryClient create role: " + e.getMessage();
       LOG.error(msg, e);
+      throw new RuntimeException(msg, e);
     } catch(Throwable e) {
-      String msg = "Error processing Sentry command: " + e.getMessage();
+      String msg = "Error processing CREATE ROLE command: " + e.getMessage();
       LOG.error(msg, e);
+      throw new RuntimeException(msg, e);
     } finally {
       if (sentryClient != null) {
         sentryClient.close();
@@ -127,15 +130,17 @@ public class DefaultSentryAccessController extends SentryAccessController {
         this.sentryClient = sentryClientFactory.createV2(authzConf);
       } catch (Exception e) {
         String msg = "Error creating Sentry client V2: " + e.getMessage();
-        throw new RuntimeException(msg, e);
+        throw new SentryAccessControlException(msg, e);
       }
       sentryClient.dropRole(currentUserName, roleName);
     } catch(SentryUserException e) {
-      String msg = "Error processing Sentry command: " + e.getMessage();
+      String msg = "Error when sentryClient drop role: " + e.getMessage();
       LOG.error(msg, e);
+      throw new RuntimeException(msg, e);
     } catch(Throwable e) {
-      String msg = "Error processing Sentry command: " + e.getMessage();
+      String msg = "Error processing DROP ROLE command: " + e.getMessage();
       LOG.error(msg, e);
+      throw new RuntimeException(msg, e);
     } finally {
       if (sentryClient != null) {
         sentryClient.close();
@@ -164,15 +169,17 @@ public class DefaultSentryAccessController extends SentryAccessController {
         this.sentryClient = sentryClientFactory.createV2(authzConf);
       } catch (Exception e) {
         String msg = "Error creating Sentry client V2: " + e.getMessage();
-        throw new RuntimeException(msg, e);
+        throw new SentryAccessControlException(msg, e);
       }
       roles = SentryAuthorizerUtil.convert2RoleList(sentryClient.listRoles(currentUserName));
     } catch(SentryUserException e) {
-      String msg = "Error processing Sentry command: " + e.getMessage();
+      String msg = "Error when sentryClient listRoles: " + e.getMessage();
       LOG.error(msg, e);
+      throw new RuntimeException(msg, e);
     } catch(Throwable e) {
-      String msg = "Error processing Sentry command: " + e.getMessage();
+      String msg = "Error processing SHOW ROLES command: " + e.getMessage();
       LOG.error(msg, e);
+      throw new RuntimeException(msg, e);
     } finally {
       if (sentryClient != null) {
         sentryClient.close();
@@ -191,7 +198,7 @@ public class DefaultSentryAccessController extends SentryAccessController {
         this.sentryClient = sentryClientFactory.createV2(authzConf);
       } catch (Exception e) {
         String msg = "Error creating Sentry client V2: " + e.getMessage();
-        throw new RuntimeException(msg, e);
+        throw new SentryAccessControlException(msg, e);
       }
       List<? extends Authorizable> authorizable =
           SentryAuthorizerUtil.convert2SentryPrivilege(new Server(serverName), privObj);
@@ -203,11 +210,13 @@ public class DefaultSentryAccessController extends SentryAccessController {
         }
       }
     } catch(SentryUserException e) {
-      String msg = "Error processing Sentry command: " + e.getMessage();
+      String msg = "Error when sentryClient listPrivilegesByRoleName: " + e.getMessage();
       LOG.error(msg, e);
+      throw new RuntimeException(msg, e);
     } catch(Throwable e) {
-      String msg = "Error processing Sentry command: " + e.getMessage();
+      String msg = "Error processing SHOW GRANT command: " + e.getMessage();
       LOG.error(msg, e);
+      throw new RuntimeException(msg, e);
     } finally {
       if (sentryClient != null) {
         sentryClient.close();
@@ -224,15 +233,17 @@ public class DefaultSentryAccessController extends SentryAccessController {
         this.sentryClient = sentryClientFactory.createV2(authzConf);
       } catch (Exception e) {
         String msg = "Error creating Sentry client V2: " + e.getMessage();
-        throw new RuntimeException(msg, e);
+        throw new SentryAccessControlException(msg, e);
       }
       hiveAuthzBinding.setActiveRoleSet(roleName, sentryClient.listUserRoles(currentUserName));
     } catch(SentryUserException e) {
-      String msg = "Error processing Sentry command: " + e.getMessage();
+      String msg = "Error when sentryClient listUserRoles or hiveAuthzBinding setActiveRole" + e.getMessage();
       LOG.error(msg, e);
+      throw new RuntimeException(msg, e);
     } catch(Throwable e) {
-      String msg = "Error processing Sentry command: " + e.getMessage();
+      String msg = "Error processing SET ROLE command: " + e.getMessage();
       LOG.error(msg, e);
+      throw new RuntimeException(msg, e);
     } finally {
       if (sentryClient != null) {
         sentryClient.close();
@@ -249,15 +260,17 @@ public class DefaultSentryAccessController extends SentryAccessController {
         this.sentryClient = sentryClientFactory.createV2(authzConf);
       } catch (Exception e) {
         String msg = "Error creating Sentry client V2: " + e.getMessage();
-        throw new RuntimeException(msg, e);
+        throw new SentryAccessControlException(msg, e);
       }
       roles = SentryAuthorizerUtil.convert2RoleList(sentryClient.listUserRoles(currentUserName));
     } catch(SentryUserException e) {
-      String msg = "Error processing Sentry command: " + e.getMessage();
+      String msg = "Error when sentryClient listUserRoles: " + e.getMessage();
       LOG.error(msg, e);
+      throw new RuntimeException(msg, e);
     } catch(Throwable e) {
-      String msg = "Error processing Sentry command: " + e.getMessage();
+      String msg = "Error processing SHOW CURRENT ROLES command: " + e.getMessage();
       LOG.error(msg, e);
+      throw new RuntimeException(msg, e);
     } finally {
       if (sentryClient != null) {
         sentryClient.close();
@@ -282,13 +295,12 @@ public class DefaultSentryAccessController extends SentryAccessController {
         this.sentryClient = sentryClientFactory.createV2(authzConf);
       } catch (Exception e) {
         String msg = "Error creating Sentry client V2: " + e.getMessage();
-        throw new RuntimeException(msg, e);
+        throw new SentryAccessControlException(msg, e);
       }
-      HivePrincipalType principalType = principal.getType();
       // TODO it will be HivePrincipalType.GROUP in future hive version
-      if (principalType != HivePrincipalType.UNKNOWN) {
-        String msg = SentryHiveConstants.GRANT_REVOKE_NOT_SUPPORTED_FOR_PRINCIPAL + principalType;
-        throw new RuntimeException(msg);
+      if (principal.getType() != HivePrincipalType.UNKNOWN) {
+        String msg = SentryHiveConstants.GRANT_REVOKE_NOT_SUPPORTED_FOR_PRINCIPAL + principal.getType();
+        throw new SentryAccessControlException(msg);
       }
       Set<TSentryRole> roles = sentryClient.listRolesByGroupName(currentUserName, principal.getName());
       if (roles != null && !roles.isEmpty()) {
@@ -297,11 +309,13 @@ public class DefaultSentryAccessController extends SentryAccessController {
         }
       }
     } catch(SentryUserException e) {
-      String msg = "Error processing Sentry command: " + e.getMessage();
+      String msg = "Error when sentryClient listRolesByGroupName: " + e.getMessage();
       LOG.error(msg, e);
+      throw new RuntimeException(msg, e);
     } catch(Throwable e) {
-      String msg = "Error processing Sentry command: " + e.getMessage();
+      String msg = "Error processing SHOW ROLE GRANT command: " + e.getMessage();
       LOG.error(msg, e);
+      throw new RuntimeException(msg, e);
     } finally {
       if (sentryClient != null) {
         sentryClient.close();
@@ -369,10 +383,15 @@ public class DefaultSentryAccessController extends SentryAccessController {
         this.sentryClient = sentryClientFactory.createV2(authzConf);
       } catch (Exception e) {
         String msg = "Error creating Sentry client V2: " + e.getMessage();
-        throw new RuntimeException(msg, e);
+        throw new SentryAccessControlException(msg, e);
       }
 
       for (HivePrincipal principal : hivePrincipals) {
+        // Now Sentry only support grant privilege to ROLE
+        if (principal.getType() != HivePrincipalType.ROLE) {
+          String msg = SentryHiveConstants.GRANT_REVOKE_NOT_SUPPORTED_FOR_PRINCIPAL + principal.getType();
+          throw new SentryAccessControlException(msg);
+        }
         for (HivePrivilege privilege : hivePrivileges) {
           String grantorName = grantorPrincipal.getName();
           String roleName = principal.getName();
@@ -425,7 +444,8 @@ public class DefaultSentryAccessController extends SentryAccessController {
 
           // Now we don't support partition
           if (privInfo == null) {
-            throw new RuntimeException(hivePrivObject.getType().name() + "are not supported in sentry");
+            throw new SentryAccessControlException(hivePrivObject.getType().name() +
+                "are not supported in sentry");
           }
 
           // grant or revoke privilege
@@ -437,11 +457,13 @@ public class DefaultSentryAccessController extends SentryAccessController {
         }
       }
     } catch(SentryUserException e) {
-      String msg = "Error processing Sentry command: " + e.getMessage();
+      String msg = "Error when sentryClient grant/revoke privilege:" + e.getMessage();
       LOG.error(msg, e);
+      throw new RuntimeException(e);
     } catch(Throwable e) {
-      String msg = "Error processing Sentry command: " + e.getMessage();
+      String msg = "Error processing GRANT/REVOKE PRIVILEGE command: " + e.getMessage();
       LOG.error(msg, e);
+      throw new RuntimeException(e);
     } finally {
       if (sentryClient != null) {
         sentryClient.close();
@@ -467,9 +489,14 @@ public class DefaultSentryAccessController extends SentryAccessController {
         this.sentryClient = sentryClientFactory.createV2(authzConf);
       } catch (Exception e) {
         String msg = "Error creating Sentry client V2: " + e.getMessage();
-        throw new RuntimeException(msg, e);
+        throw new SentryAccessControlException(msg, e);
       }
       for (HivePrincipal principal : hivePrincipals) {
+        // TODO it will be HivePrincipalType.GROUP in future hive version
+        if (principal.getType() != HivePrincipalType.UNKNOWN) {
+          String msg = SentryHiveConstants.GRANT_REVOKE_NOT_SUPPORTED_FOR_PRINCIPAL + principal.getType();
+          throw new SentryAccessControlException(msg);
+        }
         for (String roleName : roles) {
           if (isGrant) {
             sentryClient.grantRoleToGroup(grantorPrinc.getName(), principal.getName(), roleName);
@@ -480,11 +507,13 @@ public class DefaultSentryAccessController extends SentryAccessController {
       }
 
     } catch(SentryUserException e) {
-      String msg = "Error processing Sentry command: " + e.getMessage();
+      String msg = "Error when sentryClient grant/revoke role:" + e.getMessage();
       LOG.error(msg, e);
-    } catch(Throwable e) {
-      String msg = "Error processing Sentry command: " + e.getMessage();
+      throw new RuntimeException(e);
+    } catch(Exception e) {
+      String msg = "Error processing GRANT/REVOKE ROLE command: " + e.getMessage();
       LOG.error(msg, e);
+      throw new RuntimeException(e);
     } finally {
       if (sentryClient != null) {
         sentryClient.close();

@@ -98,52 +98,187 @@ public abstract class SentryAccessController implements HiveAccessController {
         "Config " + AuthzConfVars.AUTHZ_SERVER_NAME.getVar() + " is required");
   }
 
+  /**
+   * Hive statement: Grant privilege
+   * GRANT
+   *     priv_type [, priv_type ] ...
+   *     ON table_or_view_name
+   *     TO principal_specification [, principal_specification] ...
+   *     [WITH GRANT OPTION];
+   *
+   * principal_specification
+   *   : USER user
+   *   | ROLE role
+   *
+   * priv_type
+   *   : INSERT | SELECT | UPDATE | DELETE | ALL
+   *
+   * @param hivePrincipals
+   * @param hivePrivileges
+   * @param hivePrivObject
+   * @param grantorPrincipal
+   * @param grantOption
+   * @throws SentryAccessControlException
+   */
   @Override
   public abstract void grantPrivileges(List<HivePrincipal> hivePrincipals,
       List<HivePrivilege> hivePrivileges, HivePrivilegeObject hivePrivObject,
       HivePrincipal grantorPrincipal, boolean grantOption) throws SentryAccessControlException;
 
+  /**
+   * Hive statement: Revoke privilege
+   * REVOKE
+   *     priv_type [, priv_type ] ...
+   *     ON table_or_view_name
+   *     FROM principal_specification [, principal_specification] ... ;
+   *
+   * principal_specification
+   *   : USER user
+   *   | ROLE role
+   *
+   * priv_type
+   *   : INSERT | SELECT | UPDATE | DELETE | ALL
+   *
+   * @param hivePrincipals
+   * @param hivePrivileges
+   * @param hivePrivObject
+   * @param grantorPrincipal
+   * @param grantOption
+   * @throws SentryAccessControlException
+   */
   @Override
   public abstract void revokePrivileges(List<HivePrincipal> hivePrincipals,
       List<HivePrivilege> hivePrivileges, HivePrivilegeObject hivePrivObject,
       HivePrincipal grantorPrincipal, boolean grantOption) throws SentryAccessControlException;
 
+  /**
+   * Hive statement: Create role
+   * CREATE ROLE role_name;
+   *
+   * @param roleName
+   * @param adminGrantor
+   * @throws SentryAccessControlException
+   */
   @Override
   public abstract void createRole(String roleName, HivePrincipal adminGrantor)
       throws SentryAccessControlException;
 
+  /**
+   * Hive statement: Drop role
+   * DROP ROLE role_name;
+   *
+   * @param roleName
+   * @throws SentryAccessControlException
+   */
   @Override
   public abstract void dropRole(String roleName) throws SentryAccessControlException;
 
+  /**
+   * Hive statement: Grant role
+   * GRANT role_name [, role_name] ...
+   * TO principal_specification [, principal_specification] ...
+   * [ WITH ADMIN OPTION ];
+   *
+   * principal_specification
+   *   : USER user
+   *   | ROLE role
+   *
+   * @param hivePrincipals
+   * @param roles
+   * @param grantOption
+   * @param grantorPrinc
+   * @throws SentryAccessControlException
+   */
   @Override
   public abstract void grantRole(List<HivePrincipal> hivePrincipals, List<String> roles,
       boolean grantOption, HivePrincipal grantorPrinc) throws SentryAccessControlException;
 
+  /**
+   * Hive statement: Revoke role
+   * REVOKE [ADMIN OPTION FOR] role_name [, role_name] ...
+   * FROM principal_specification [, principal_specification] ... ;
+   *
+   * principal_specification
+   *   : USER user
+   *   | ROLE role
+   *
+   * @param hivePrincipals
+   * @param roles
+   * @param grantOption
+   * @param grantorPrinc
+   * @throws SentryAccessControlException
+   */
   @Override
   public abstract void revokeRole(List<HivePrincipal> hivePrincipals,
       List<String> roles, boolean grantOption, HivePrincipal grantorPrinc)
           throws SentryAccessControlException;
 
+  /**
+   * Hive statement: Show roles
+   * SHOW ROLES;
+   *
+   * @throws SentryAccessControlException
+   */
   @Override
   public abstract List<String> getAllRoles() throws SentryAccessControlException;
 
+  /**
+   * Hive statement: Show grant
+   * SHOW GRANT [principal_name] ON (ALL| ([TABLE] table_or_view_name);
+   *
+   * @param principal
+   * @param privObj
+   * @throws SentryAccessControlException
+   */
   @Override
   public abstract List<HivePrivilegeInfo> showPrivileges(HivePrincipal principal,
       HivePrivilegeObject privObj) throws SentryAccessControlException;
 
+  /**
+   * Hive statement: Set role
+   * SET ROLE (role_name|ALL);
+   *
+   * @param roleName
+   * @throws SentryAccessControlException
+   */
   @Override
   public abstract void setCurrentRole(String roleName) throws SentryAccessControlException;
 
+  /**
+   * Hive statement: Show current roles
+   * SHOW CURRENT ROLES;
+   *
+   */
   @Override
   public abstract List<String> getCurrentRoleNames() ;
 
+  /**
+   * Hive statement: Set role privileges
+   * SHOW PRINCIPALS role_name;
+   *
+   * @param roleName
+   * @throws SentryAccessControlException
+   */
   @Override
-  public abstract List<HiveRoleGrant> getPrincipalGrantInfoForRole(String roleName);
+  public abstract List<HiveRoleGrant> getPrincipalGrantInfoForRole(String roleName)
+      throws SentryAccessControlException;
 
+  /**
+   * Hive statement: Set role grant
+   * SHOW ROLE GRANT (USER|ROLE) principal_name;
+   *
+   * @param principal
+   * @throws SentryAccessControlException
+   */
   @Override
   public abstract List<HiveRoleGrant> getRoleGrantInfoForPrincipal(
-      HivePrincipal principal);
+      HivePrincipal principal) throws SentryAccessControlException;
 
+  /**
+   * Apply configuration files for authorization V2
+   *
+   * @param hiveConf
+   */
   @Override
   public abstract void applyAuthorizationConfigPolicy(HiveConf hiveConf);
 
