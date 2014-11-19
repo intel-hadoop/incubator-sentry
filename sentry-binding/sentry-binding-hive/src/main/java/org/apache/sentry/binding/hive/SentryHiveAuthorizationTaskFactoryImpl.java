@@ -224,7 +224,7 @@ public class SentryHiveAuthorizationTaskFactoryImpl implements HiveAuthorization
     }
 
     ShowGrantDesc showGrant = new ShowGrantDesc(resultFile.toString(),
-        principalDesc, privHiveObj, null);
+        principalDesc, privHiveObj);
     return createTask(new DDLWork(inputs, outputs, showGrant));
   }
 
@@ -294,10 +294,10 @@ public class SentryHiveAuthorizationTaskFactoryImpl implements HiveAuthorization
           throw new SemanticException(SentryHiveConstants.PARTITION_PRIVS_NOT_SUPPORTED);
         } else if (astChild.getToken().getType() == HiveParser.TOK_TABCOLNAME) {
           throw new SemanticException(SentryHiveConstants.COLUMN_PRIVS_NOT_SUPPORTED);
-        }else if (astChild.getToken().getType() == HiveParser.TOK_URI) {
+        }else if (astChild.getToken().getType() == HiveParser.TOK_URI_TYPE) {
           privilegeObject = privilegeObject.replaceAll("'", "").replaceAll("\"", "");
           subject.setUri(true);
-        } else if (astChild.getToken().getType() == HiveParser.TOK_SERVER) {
+        } else if (astChild.getToken().getType() == HiveParser.TOK_SERVER_TYPE) {
           subject.setServer(true);
         } else if (astChild.getToken().getType() == HiveParser.TOK_TABLE_TYPE) {
           subject.setTable(true);

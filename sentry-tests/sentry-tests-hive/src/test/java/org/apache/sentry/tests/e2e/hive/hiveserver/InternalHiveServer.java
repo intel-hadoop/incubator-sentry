@@ -20,7 +20,6 @@ package org.apache.sentry.tests.e2e.hive.hiveserver;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStore;
 import org.apache.hive.service.server.HiveServer2;
-import org.fest.reflect.core.Reflection;
 
 public class InternalHiveServer extends AbstractHiveServer {
 
@@ -29,13 +28,9 @@ public class InternalHiveServer extends AbstractHiveServer {
 
   public InternalHiveServer(HiveConf conf) throws Exception {
     super(conf, getHostname(conf), getPort(conf));
-    // Fix for ACCESS-148. Resets a static field
-    // so the default database is created even
+    // Create default database is created even
     // though is has been created before in this JVM
-    Reflection.staticField("createDefaultDB")
-      .ofType(boolean.class)
-      .in(HiveMetaStore.HMSHandler.class)
-      .set(false);
+    new HiveMetaStore.HMSHandler("new db based metaserver");
     hiveServer2 = new HiveServer2();
     this.conf = conf;
   }

@@ -17,7 +17,14 @@
 
 package org.apache.sentry.binding.hive.authz;
 
-import com.google.common.collect.Table;
+import java.security.CodeSource;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
@@ -40,7 +47,6 @@ import org.apache.sentry.binding.hive.HiveAuthzBindingHook;
 import org.apache.sentry.binding.hive.HiveAuthzBindingSessionHook;
 import org.apache.sentry.binding.hive.conf.HiveAuthzConf;
 import org.apache.sentry.binding.hive.conf.HiveAuthzConf.AuthzConfVars;
-
 import org.apache.sentry.core.common.SentryConfigurationException;
 import org.apache.sentry.core.common.Subject;
 import org.apache.sentry.core.model.db.AccessConstants;
@@ -55,14 +61,7 @@ import org.apache.sentry.provider.file.KeyValue;
 import org.apache.sentry.provider.file.PolicyFileConstants;
 import org.apache.sentry.provider.file.SimpleFileProviderBackend;
 
-import java.security.CodeSource;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.HashSet;
-import java.util.Set;
+import com.google.common.collect.Table;
 
 public class SentryConfigTool {
   private String sentrySiteFile = null;
@@ -384,7 +383,7 @@ public class SentryConfigTool {
     // setup Hive driver
     SessionState session = new SessionState(getHiveConf());
     SessionState.start(session);
-    Driver driver = new Driver(session.getConf(), getUser(), null);
+    Driver driver = new Driver(session.getConf(), getUser());
 
     // compile the query
     CommandProcessorResponse compilerStatus = driver
