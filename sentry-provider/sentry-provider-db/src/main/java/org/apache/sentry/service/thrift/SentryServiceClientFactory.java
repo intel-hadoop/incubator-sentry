@@ -19,12 +19,17 @@
 package org.apache.sentry.service.thrift;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.sentry.provider.db.service.thrift.SentryPolicyServiceClient;
+import org.apache.sentry.provider.db.service.thrift.SentryPolicyServiceClientV2;
 
 public class SentryServiceClientFactory {
 
   public SentryPolicyServiceClient create(Configuration conf) throws Exception {
     SentryPolicyServiceClient client = new SentryPolicyServiceClient(conf);
     return client;
+  }
+
+  public SentryPolicyServiceClientV2 createV2(Configuration conf) throws Exception {
+    return new SentryPolicyServiceClientV2(conf);
   }
 
 }

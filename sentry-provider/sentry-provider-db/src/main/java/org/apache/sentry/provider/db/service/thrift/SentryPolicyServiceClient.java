@@ -38,6 +38,7 @@ import org.apache.sentry.core.common.ActiveRoleSet;
 import org.apache.sentry.core.common.Authorizable;
 import org.apache.sentry.core.model.db.AccessConstants;
 import org.apache.sentry.core.model.db.DBModelAuthorizable;
+import org.apache.sentry.core.model.db.PrivilegeInfo;
 import org.apache.sentry.service.thrift.ServiceConstants.ClientConfig;
 import org.apache.sentry.service.thrift.ServiceConstants.PrivilegeScope;
 import org.apache.sentry.service.thrift.ServiceConstants.ServerConfig;
@@ -66,7 +67,7 @@ public class SentryPolicyServiceClient {
   private final InetSocketAddress serverAddress;
   private final boolean kerberos;
   private final String[] serverPrincipalParts;
-  private SentryPolicyService.Client client;
+  protected SentryPolicyService.Client client;
   private TTransport transport;
   private int connectionTimeout;
   private static final Logger LOGGER = LoggerFactory
@@ -626,7 +627,7 @@ public class SentryPolicyServiceClient {
     return setBuilder.build();
   }
 
-  private TSentryGrantOption convertTSentryGrantOption(Boolean grantOption) {
+  protected TSentryGrantOption convertTSentryGrantOption(Boolean grantOption) {
     if (grantOption == null) {
       return TSentryGrantOption.UNSET;
     } else if (grantOption.equals(true)) {
@@ -778,5 +779,15 @@ TSENTRY_SERVICE_VERSION_CURRENT, requestorUserName,
     if (transport != null) {
       transport.close();
     }
+  }
+
+  public void grantPrivilege(String grantorName, String roleName,
+      PrivilegeInfo privInfo) throws SentryUserException {
+    // implementation in SentryPolicyServiceClientV2
+  }
+
+  public void revokePrivilege(String grantorName, String roleName,
+      PrivilegeInfo privInfo) throws SentryUserException {
+    // implementation in SentryPolicyServiceClientV2
   }
 }
