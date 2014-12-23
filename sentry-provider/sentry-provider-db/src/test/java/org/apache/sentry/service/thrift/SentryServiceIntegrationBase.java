@@ -277,4 +277,21 @@ public abstract class SentryServiceIntegrationBase extends SentryMiniKdcTestcase
 
   }
 
+  protected void doTest(final TestOperation test) throws Exception {
+    if (this.kerberos) {
+      Subject.doAs(clientSubject, new PrivilegedExceptionAction<Void>() {
+        @Override
+        public Void run() throws Exception {
+          test.doTest();
+          return null;
+        }});
+    } else {
+      test.doTest();
+    }
+  }
+
+  protected interface TestOperation {
+    public void doTest() throws Exception;
+  }
+
 }
