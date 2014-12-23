@@ -20,14 +20,13 @@ import java.io.IOException;
 import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.sentry.SentryUserException;
 import org.apache.sentry.core.common.ActiveRoleSet;
 import org.apache.sentry.core.common.Authorizable;
 import org.apache.sentry.core.common.SentryConfigurationException;
 import org.apache.sentry.provider.common.ProviderBackend;
 import org.apache.sentry.provider.common.ProviderBackendContext;
 import org.apache.sentry.provider.db.service.thrift.SentryPolicyServiceClient;
-import org.apache.sentry.service.thrift.SentryServiceClientFactory;
+import org.apache.sentry.service.thrift.SentryServicePolicyClientFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,11 +37,10 @@ public class SimpleDBProviderBackend implements ProviderBackend {
 
   private static final Logger LOGGER = LoggerFactory
       .getLogger(SimpleDBProviderBackend.class);
-
+  private SentryServicePolicyClientFactory clientFactory;
   private SentryPolicyServiceClient policyServiceClient;
 
   private volatile boolean initialized;
-  private Configuration conf; 
 
   public SimpleDBProviderBackend(Configuration conf, String resourcePath) throws Exception {
     // DB Provider doesn't use policy file path
@@ -50,9 +48,8 @@ public class SimpleDBProviderBackend implements ProviderBackend {
   }
 
   public SimpleDBProviderBackend(Configuration conf) throws Exception {
-    this(SentryServiceClientFactory.create(conf));
     this.initialized = false;
-    this.conf = conf;
+    this.clientFactory = new SentryServicePolicyClientFactory(conf);
   }
 
   @VisibleForTesting
@@ -121,7 +118,7 @@ public class SimpleDBProviderBackend implements ProviderBackend {
   private SentryPolicyServiceClient getSentryClient() {
     if (policyServiceClient == null) {
       try {
-        policyServiceClient = SentryServiceClientFactory.create(conf);
+        policyServiceClient = clientFactory.getSentryPolicyClient();
       } catch (Exception e) {
         LOGGER.error("Error connecting to Sentry ['{}'] !!",
             e.getMessage());

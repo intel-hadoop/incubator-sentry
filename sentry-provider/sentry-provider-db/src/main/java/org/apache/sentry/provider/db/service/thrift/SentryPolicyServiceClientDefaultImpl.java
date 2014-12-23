@@ -779,4 +779,12 @@ TSENTRY_SERVICE_VERSION_CURRENT, requestorUserName,
       transport.close();
     }
   }
+
+  public boolean isOpen() {
+    boolean isOpened = false;
+    if (transport != null) {
+      isOpened = transport.isOpen();
+    }
+    return isOpened;
+  }
 }

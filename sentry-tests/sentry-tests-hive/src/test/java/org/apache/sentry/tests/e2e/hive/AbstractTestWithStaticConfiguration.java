@@ -49,8 +49,8 @@ import org.apache.sentry.provider.db.SimpleDBProviderBackend;
 import org.apache.sentry.provider.db.service.thrift.SentryPolicyServiceClient;
 import org.apache.sentry.provider.file.PolicyFile;
 import org.apache.sentry.service.thrift.SentryService;
-import org.apache.sentry.service.thrift.SentryServiceClientFactory;
 import org.apache.sentry.service.thrift.SentryServiceFactory;
+import org.apache.sentry.service.thrift.SentryServicePolicyClientFactory;
 import org.apache.sentry.service.thrift.ServiceConstants.ClientConfig;
 import org.apache.sentry.service.thrift.ServiceConstants.ServerConfig;
 import org.apache.sentry.tests.e2e.hive.fs.DFS;
@@ -397,7 +397,7 @@ public abstract class AbstractTestWithStaticConfiguration {
     if (sentryServer == null) {
       throw new IllegalAccessException("Sentry service not initialized");
     }
-    return SentryServiceClientFactory.create(sentryServer.getConf());
+    return (new SentryServicePolicyClientFactory(sentryServer.getConf())).getSentryPolicyClient();
   }
 
   @Before

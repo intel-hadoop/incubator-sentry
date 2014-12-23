@@ -54,7 +54,7 @@ import org.apache.sentry.provider.db.service.thrift.TSentryRole;
 import org.apache.sentry.provider.file.KeyValue;
 import org.apache.sentry.provider.file.PolicyFileConstants;
 import org.apache.sentry.provider.file.SimpleFileProviderBackend;
-import org.apache.sentry.service.thrift.SentryServiceClientFactory;
+import org.apache.sentry.service.thrift.SentryServicePolicyClientFactory;
 
 import java.security.CodeSource;
 import java.sql.Connection;
@@ -263,7 +263,7 @@ public class SentryConfigTool {
     ProviderBackendContext context = new ProviderBackendContext();
     context.setAllowPerDatabase(true);
     policyFileBackend.initialize(context);
-    client = SentryServiceClientFactory.create(getAuthzConf());
+    client = new SentryServicePolicyClientFactory(getAuthzConf()).getSentryPolicyClient();
     Set<String> roles = new HashSet<String>();
     for (TSentryRole sentryRole : client.listRoles(requestorUserName)) {
       roles.add(sentryRole.getRoleName());
