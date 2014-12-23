@@ -22,6 +22,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.sentry.provider.db.service.thrift.SentryPolicyServiceBaseClient;
 import org.apache.sentry.service.thrift.ServiceConstants.ClientConfig;
 import org.apache.sentry.service.thrift.factory.ha.HASentryServiceClientFactory;
+import org.apache.sentry.service.thrift.factory.pool.PoolSentryServiceClientFactory;
 
 public class SentryServiceClientProxyFactory<T extends SentryPolicyServiceBaseClient> implements SentryServiceClientFactory<T> {
 
@@ -36,9 +37,13 @@ public class SentryServiceClientProxyFactory<T extends SentryPolicyServiceBaseCl
     // TODO check and throw null point exception
     this.clientFactory = defaultFactory;
     this.typeParameterClass = typeParameterClass;
+    boolean pooled = conf.getBoolean(ClientConfig.SENTRY_POOL_ENABLED, ClientConfig.SENTRY_POOL_ENABLED_DEFAULT);
     boolean haEnabled = conf.getBoolean(ClientConfig.SENTRY_HA_ENABLED, ClientConfig.SENTRY_HA_ENABLED_DEFAULT);
     if (haEnabled) {
       clientFactory = new HASentryServiceClientFactory<T>(conf, clientFactory, typeParameterClass);
+    }
+    if (pooled) {
+      clientFactory = new PoolSentryServiceClientFactory<T>(conf, clientFactory, typeParameterClass);
     }
   }
 

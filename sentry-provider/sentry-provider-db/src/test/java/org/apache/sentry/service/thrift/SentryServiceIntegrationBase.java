@@ -90,9 +90,12 @@ public abstract class SentryServiceIntegrationBase extends SentryMiniKdcTestcase
 
   private File ZKKeytabFile;
 
+  protected boolean pooled = false;
+
   @Before
   public void setup() throws Exception {
     this.kerberos = true;
+    this.pooled = true;
     beforeSetup();
     setupConf();
     startSentryService();
@@ -139,6 +142,9 @@ public abstract class SentryServiceIntegrationBase extends SentryMiniKdcTestcase
       if (kerberos) {
         conf.set(ServerConfig.SENTRY_HA_ZOOKEEPER_SECURITY, "true");
       }
+    }
+    if (pooled) {
+      conf.set(ClientConfig.SENTRY_POOL_ENABLED, "true");
     }
     conf.set(ServerConfig.SENTRY_VERIFY_SCHEM_VERSION, "false");
     conf.set(ServerConfig.ADMIN_GROUPS, ADMIN_GROUP);

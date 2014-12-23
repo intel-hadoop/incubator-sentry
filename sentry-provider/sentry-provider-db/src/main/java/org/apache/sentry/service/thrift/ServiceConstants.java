@@ -173,6 +173,9 @@ public class ServiceConstants {
     public static final String SENTRY_HA_ZOOKEEPER_NAMESPACE = ServerConfig.SENTRY_HA_ZOOKEEPER_NAMESPACE;
     public static final String SENTRY_HA_ZOOKEEPER_NAMESPACE_DEFAULT = ServerConfig.SENTRY_HA_ZOOKEEPER_NAMESPACE_DEFAULT;
 
+    public static final String SENTRY_POOL_ENABLED = "sentry.service.client.connection.pool.enabled";
+    public static final boolean SENTRY_POOL_ENABLED_DEFAULT = false;
+
   }
 
   /**
