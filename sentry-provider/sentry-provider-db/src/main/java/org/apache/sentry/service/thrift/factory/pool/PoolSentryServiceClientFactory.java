@@ -49,17 +49,10 @@ public class PoolSentryServiceClientFactory<T extends SentryPolicyServiceBaseCli
     ensureInvocationHandler();
     boolean pooled = conf.getBoolean(ClientConfig.SENTRY_POOL_ENABLED, ClientConfig.SENTRY_POOL_ENABLED_DEFAULT);
     if (pooled) {
-      if (typeParameterClass.isInterface()) {
-        return (T) Proxy
-            .newProxyInstance(typeParameterClass.getClassLoader(),
-                new Class[]{typeParameterClass},
-                handler);
-      } else {
-        return (T) Proxy
-            .newProxyInstance(typeParameterClass.getClassLoader(),
-                typeParameterClass.getInterfaces(),
-                handler);
-      }
+      return (T) Proxy
+          .newProxyInstance(typeParameterClass.getClassLoader(),
+              new Class[]{typeParameterClass},
+              handler);
     } else {
       return factory.getSentryPolicyClient();
     }

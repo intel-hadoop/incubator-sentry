@@ -173,9 +173,38 @@ public class ServiceConstants {
     public static final String SENTRY_HA_ZOOKEEPER_NAMESPACE = ServerConfig.SENTRY_HA_ZOOKEEPER_NAMESPACE;
     public static final String SENTRY_HA_ZOOKEEPER_NAMESPACE_DEFAULT = ServerConfig.SENTRY_HA_ZOOKEEPER_NAMESPACE_DEFAULT;
 
+    // connection pool configuration
     public static final String SENTRY_POOL_ENABLED = "sentry.service.client.connection.pool.enabled";
     public static final boolean SENTRY_POOL_ENABLED_DEFAULT = false;
 
+    public static final String SENTRY_POOL_MAX_TOTAL = "sentry.service.client.connection.pool.max-total";
+    public static final int SENTRY_POOL_MAX_TOTAL_DEFAULT = 8;
+    public static final String SENTRY_POOL_MAX_IDLE = "sentry.service.client.connection.pool.max-idle";
+    public static final int SENTRY_POOL_MAX_IDLE_DEFAULT = 8;
+    public static final String SENTRY_POOL_MIN_IDLE = "sentry.service.client.connection.pool.min-idle";
+    public static final int SENTRY_POOL_MIN_IDLE_DEFAULT = 0;
+    public static final String SENTRY_POOL_LIFO = "sentry.service.client.connection.pool.lifo";
+    public static final boolean SENTRY_POOL_LIFO_DEFAULT = true;
+    public static final String SENTRY_POOL_MAX_WAIT_MILLIS = "sentry.service.client.connection.pool.max-wait-millis";
+    public static final long SENTRY_POOL_MAX_WAIT_MILLIS_DEFAULT = -1L;
+    public static final String SENTRY_POOL_MIN_EVICTABLE_IDLE_TIME_MILLIS = "sentry.service.client.connection.pool.min-evictable-idle-time-millis";
+    public static final long SENTRY_POOL_MIN_EVICTABLE_IDLE_TIME_MILLIS_DEFAULT = 1000L * 60L * 30L;
+    public static final String SENTRY_POOL_SOFT_MIN_EVICTABLE_IDLE_TIME_MILLIS = "sentry.service.client.connection.pool.soft-min-evictable-idle-time-millis";
+    public static final long SENTRY_POOL_SOFT_MIN_EVICTABLE_IDLE_TIME_MILLIS_DEFAULT = -1;
+    public static final String SENTRY_POOL_NUM_TESTS_PER_EVICTION_RUN = "sentry.service.client.connection.pool.num-tests-per-eviction-run";
+    public static final int SENTRY_POOL_NUM_TESTS_PER_EVICTION_RUN_DEFAULT = 3;
+    public static final String SENTRY_POOL_TEST_ON_CREATE = "sentry.service.client.connection.pool.test-on-create";
+    public static final boolean SENTRY_POOL_TEST_ON_CREATE_DEFAULT = false;
+    public static final String SENTRY_POOL_TEST_ON_BORROW = "sentry.service.client.connection.pool.test-on-borrow";
+    public static final boolean SENTRY_POOL_TEST_ON_BORROW_DEFAULT = false;
+    public static final String SENTRY_POOL_TEST_ON_RETURN = "sentry.service.client.connection.pool.test-on-return";
+    public static final boolean SENTRY_POOL_TEST_ON_RETURN_DEFAULT = false;
+    public static final String SENTRY_POOL_TEST_WHILE_IDLE = "sentry.service.client.connection.pool.test-while-idle";
+    public static final boolean SENTRY_POOL_TEST_WHILE_IDLE_DEFAULT = false;
+    public static final String SENTRY_POOL_TIME_BETWEEN_EVICTION_RUNS_MILLIS = "sentry.service.client.connection.pool.time-between-eviction-runs-millis";
+    public static final long SENTRY_POOL_TIME_BETWEEN_EVICTION_RUNS_MILLIS_DEFAULT = -1L;
+    public static final String SENTRY_POOL_BLOCK_WHEN_EXHAUSTED = "sentry.service.client.connection.pool.block-when-exhausted";
+    public static final boolean SENTRY_POOL_BLOCK_WHEN_EXHAUSTED_DEFAULT = true;
   }
 
   /**

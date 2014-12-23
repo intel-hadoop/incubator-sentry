@@ -26,6 +26,7 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.sentry.SentryUserException;
 import org.apache.sentry.provider.db.service.thrift.SentryPolicyServiceBaseClient;
+import org.apache.sentry.service.thrift.ServiceConstants.ClientConfig;
 import org.apache.sentry.service.thrift.factory.SentryClientInvocationHandler;
 import org.apache.sentry.service.thrift.factory.SentryServiceClientFactory;
 import org.slf4j.Logger;
@@ -36,22 +37,15 @@ public class PoolClientInvocationHandler<T extends SentryPolicyServiceBaseClient
   private static final Logger LOGGER = LoggerFactory.getLogger(PoolClientInvocationHandler.class);
 
   private final Configuration conf;
-  private Integer maxActive = 32;
-  private Integer idleTime = 1000;
   private PooledObjectFactory<T> poolFactory;
   private GenericObjectPool<T> pool;
+  private GenericObjectPoolConfig poolConfig;
 
   private static final String POOL_EXCEPTION_MESSAGE = "Pool exception occured ";
 
   public PoolClientInvocationHandler(Configuration conf, SentryServiceClientFactory<T> factory) throws Exception {
     this.conf = conf;
-    GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
-    // TODO read from conf
-    poolConfig.setMaxTotal(this.conf.getInt(POOL_EXCEPTION_MESSAGE,maxActive));
-    poolConfig.setMaxTotal(maxActive);
-    poolConfig.setMinIdle(0);
-    poolConfig.setMinEvictableIdleTimeMillis(idleTime);
-    poolConfig.setTimeBetweenEvictionRunsMillis(idleTime/2L);
+    readConfiguration();
     poolFactory = new SentryServiceClientPoolFactory<T>(factory);
     pool = new GenericObjectPool<T>(poolFactory, poolConfig);
   }
@@ -102,4 +96,33 @@ public class PoolClientInvocationHandler<T extends SentryPolicyServiceBaseClient
     }
   }
 
+  private void readConfiguration() {
+    poolConfig = new GenericObjectPoolConfig();
+
+    poolConfig.setMaxTotal(conf.getInt(ClientConfig.SENTRY_POOL_MAX_TOTAL, ClientConfig.SENTRY_POOL_MAX_TOTAL_DEFAULT));
+    poolConfig.setMinIdle(conf.getInt(ClientConfig.SENTRY_POOL_MIN_IDLE, ClientConfig.SENTRY_POOL_MIN_IDLE_DEFAULT));
+    poolConfig.setMaxIdle(conf.getInt(ClientConfig.SENTRY_POOL_MAX_IDLE, ClientConfig.SENTRY_POOL_MAX_IDLE_DEFAULT));
+
+    poolConfig.setLifo(conf.getBoolean(ClientConfig.SENTRY_POOL_LIFO, ClientConfig.SENTRY_POOL_LIFO_DEFAULT));
+    poolConfig.setMaxWaitMillis(conf.getLong(ClientConfig.SENTRY_POOL_MAX_WAIT_MILLIS,
+        ClientConfig.SENTRY_POOL_MAX_WAIT_MILLIS_DEFAULT));
+    poolConfig.setMinEvictableIdleTimeMillis(conf.getLong(ClientConfig.SENTRY_POOL_MIN_EVICTABLE_IDLE_TIME_MILLIS,
+        ClientConfig.SENTRY_POOL_MIN_EVICTABLE_IDLE_TIME_MILLIS_DEFAULT));
+    poolConfig.setSoftMinEvictableIdleTimeMillis(conf.getLong(ClientConfig.SENTRY_POOL_MIN_EVICTABLE_IDLE_TIME_MILLIS,
+        ClientConfig.SENTRY_POOL_MIN_EVICTABLE_IDLE_TIME_MILLIS_DEFAULT));
+    poolConfig.setNumTestsPerEvictionRun(conf.getInt(ClientConfig.SENTRY_POOL_NUM_TESTS_PER_EVICTION_RUN,
+        ClientConfig.SENTRY_POOL_NUM_TESTS_PER_EVICTION_RUN_DEFAULT));
+    poolConfig.setTestOnCreate(conf.getBoolean(ClientConfig.SENTRY_POOL_TEST_ON_CREATE,
+        ClientConfig.SENTRY_POOL_TEST_ON_CREATE_DEFAULT));
+    poolConfig.setTestOnBorrow(conf.getBoolean(ClientConfig.SENTRY_POOL_TEST_ON_BORROW,
+        ClientConfig.SENTRY_POOL_TEST_ON_BORROW_DEFAULT));
+    poolConfig.setTestOnReturn(conf.getBoolean(ClientConfig.SENTRY_POOL_TEST_ON_RETURN,
+        ClientConfig.SENTRY_POOL_TEST_ON_RETURN_DEFAULT));
+    poolConfig.setTestWhileIdle(conf.getBoolean(ClientConfig.SENTRY_POOL_TEST_WHILE_IDLE,
+        ClientConfig.SENTRY_POOL_TEST_WHILE_IDLE_DEFAULT));
+    poolConfig.setTimeBetweenEvictionRunsMillis(conf.getLong(ClientConfig.SENTRY_POOL_TIME_BETWEEN_EVICTION_RUNS_MILLIS,
+        ClientConfig.SENTRY_POOL_TIME_BETWEEN_EVICTION_RUNS_MILLIS_DEFAULT));
+    poolConfig.setBlockWhenExhausted(conf.getBoolean(ClientConfig.SENTRY_POOL_BLOCK_WHEN_EXHAUSTED,
+        ClientConfig.SENTRY_POOL_BLOCK_WHEN_EXHAUSTED_DEFAULT));
+  }
 }
