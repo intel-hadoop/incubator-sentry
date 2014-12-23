@@ -49,17 +49,10 @@ public class HASentryServiceClientFactory<T extends SentryPolicyServiceBaseClien
     ensureInvocationHandler();
     boolean haEnabled = conf.getBoolean(ClientConfig.SENTRY_HA_ENABLED, ClientConfig.SENTRY_HA_ENABLED_DEFAULT);
     if (haEnabled) {
-      if (typeParameterClass.isInterface()) {
-        return (T) Proxy
-            .newProxyInstance(typeParameterClass.getClassLoader(),
-                new Class[]{typeParameterClass},
-                handler);
-      } else {
-        return (T) Proxy
-            .newProxyInstance(typeParameterClass.getClassLoader(),
-                typeParameterClass.getInterfaces(),
-                handler);
-      }
+      return (T) Proxy
+          .newProxyInstance(typeParameterClass.getClassLoader(),
+              new Class[]{typeParameterClass},
+              handler);
     } else {
       return factory.getSentryPolicyClient();
     }
