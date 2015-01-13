@@ -22,6 +22,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.sentry.provider.db.service.thrift.SentryPolicyServiceBaseClient;
 import org.apache.sentry.service.thrift.ServiceConstants.ClientConfig;
 import org.apache.sentry.service.thrift.factory.ha.SentryHAClientFactory;
+import org.apache.sentry.service.thrift.factory.pool.SentryPoolingClientFactory;
 
 import com.google.common.base.Preconditions;
 
@@ -40,6 +41,11 @@ public class SentryServiceClientProxyFactory<T extends SentryPolicyServiceBaseCl
     boolean haEnabled = conf.getBoolean(ClientConfig.SERVER_HA_ENABLED, ClientConfig.SERVER_HA_ENABLED_DEFAULT);
     if (haEnabled) {
       clientFactory = new SentryHAClientFactory<T>(conf, clientFactory, typeParameterClass);
+    }
+    boolean pooled = conf.getBoolean(ClientConfig.SENTRY_POOL_ENABLED,
+        ClientConfig.SENTRY_POOL_ENABLED_DEFAULT);
+    if (pooled) {
+      clientFactory = new SentryPoolingClientFactory<T>(conf, clientFactory, typeParameterClass);
     }
   }
 

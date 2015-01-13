@@ -82,6 +82,7 @@ import org.apache.sentry.service.thrift.SentryService;
 import org.apache.sentry.service.thrift.SentryServiceFactory;
 import org.apache.sentry.service.thrift.ServiceConstants.ClientConfig;
 import org.apache.sentry.service.thrift.ServiceConstants.ServerConfig;
+import org.apache.sentry.service.thrift.factory.SentryServiceClientFactory;
 import org.apache.sentry.tests.e2e.hive.StaticUserGroup;
 import org.apache.sentry.tests.e2e.hive.fs.MiniDFS;
 import org.apache.sentry.tests.e2e.hive.hiveserver.HiveServerFactory;

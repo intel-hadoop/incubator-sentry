@@ -91,9 +91,12 @@ public abstract class SentryServiceIntegrationBase extends SentryMiniKdcTestcase
 
   private File ZKKeytabFile;
 
+  protected boolean pooled = false;
+
   @Before
   public void setup() throws Exception {
     this.kerberos = true;
+    this.pooled = true;
     beforeSetup();
     setupConf();
     startSentryService();
@@ -110,8 +113,19 @@ public abstract class SentryServiceIntegrationBase extends SentryMiniKdcTestcase
     final long start = System.currentTimeMillis();
     while(!server.isRunning()) {
       Thread.sleep(1000);
-      if(System.currentTimeMillis() - start > 60000L) {
-        throw new TimeoutException("Server did not start after 60 seconds");
+      if (System.currentTimeMillis() - start > 90000L) {
+        throw new TimeoutException("Server did not start after 90 seconds");
+      }
+    }
+  }
+
+  public void stopSentryService() throws Exception {
+    server.stop();
+    final long start = System.currentTimeMillis();
+    while (server.isRunning()) {
+      Thread.sleep(1000);
+      if (System.currentTimeMillis() - start > 90000L) {
+        throw new TimeoutException("Server did not start after 90 seconds");
       }
     }
   }
@@ -141,6 +155,9 @@ public abstract class SentryServiceIntegrationBase extends SentryMiniKdcTestcase
         conf.set(ServerConfig.SENTRY_HA_ZOOKEEPER_SECURITY, "true");
       }
     }
+    if (pooled) {
+      conf.set(ClientConfig.SENTRY_POOL_ENABLED, "true");
+    }
     conf.set(ServerConfig.SENTRY_VERIFY_SCHEM_VERSION, "false");
     conf.set(ServerConfig.ADMIN_GROUPS, ADMIN_GROUP);
     conf.set(ServerConfig.RPC_ADDRESS, SERVER_HOST);
@@ -162,6 +179,7 @@ public abstract class SentryServiceIntegrationBase extends SentryMiniKdcTestcase
   public void connectToSentryService() throws Exception {
     // The client should already be logged in when running in hive/impala/solr
     // therefore we must manually login in the integration tests
+    final SentryServicePolicyClientFactory clientFactory;
     if (kerberos) {
       conf.set(ServerConfig.SECURITY_USE_UGI_TRANSPORT, "false");
       clientFactory = new SentryServicePolicyClientFactory(conf);
