@@ -44,7 +44,7 @@ import org.apache.sentry.core.model.db.Server;
 import org.apache.sentry.core.model.db.Table;
 import org.apache.sentry.provider.db.SentryMetastoreListenerPlugin;
 import org.apache.sentry.provider.db.service.thrift.SentryPolicyServiceClient;
-import org.apache.sentry.service.thrift.SentryServiceClientFactory;
+import org.apache.sentry.service.thrift.SentryServicePolicyClientFactory;
 import org.apache.sentry.service.thrift.ServiceConstants.ConfUtilties;
 import org.apache.sentry.service.thrift.ServiceConstants.ServerConfig;
 import org.slf4j.Logger;
@@ -55,6 +55,7 @@ public class SentryMetastorePostEventListener extends MetaStoreEventListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(SentryMetastoreListenerPlugin.class);
   private final HiveAuthzConf authzConf;
   private final Server server;
+  private final SentryServicePolicyClientFactory clientFactory;
 
   private List<SentryMetastoreListenerPlugin> sentryPlugins = new ArrayList<SentryMetastoreListenerPlugin>(); 
 
@@ -62,6 +63,7 @@ public class SentryMetastorePostEventListener extends MetaStoreEventListener {
     super(config);
 
     authzConf = HiveAuthzConf.getAuthzConf((HiveConf)config);
+    clientFactory = new SentryServicePolicyClientFactory(authzConf);
     server = new Server(authzConf.get(AuthzConfVars.AUTHZ_SERVER_NAME.getVar()));
     Iterable<String> pluginClasses = ConfUtilties.CLASS_SPLITTER
         .split(config.get(ServerConfig.SENTRY_METASTORE_PLUGINS,
@@ -252,7 +254,7 @@ public class SentryMetastorePostEventListener extends MetaStoreEventListener {
   private SentryPolicyServiceClient getSentryServiceClient()
       throws MetaException {
     try {
-      return SentryServiceClientFactory.create(authzConf);
+      return clientFactory.getSentryPolicyClient();
     } catch (Exception e) {
       throw new MetaException("Failed to connect to Sentry service "
           + e.getMessage());

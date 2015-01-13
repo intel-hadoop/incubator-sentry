@@ -15,43 +15,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.sentry.service.thrift;
+package org.apache.sentry.service.thrift.factory.ha;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 
+import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.SecurityUtil;
-
-import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.sentry.SentryUserException;
 import org.apache.sentry.provider.db.service.persistent.HAContext;
 import org.apache.sentry.provider.db.service.persistent.ServiceManager;
-import org.apache.sentry.provider.db.service.thrift.SentryPolicyServiceClient;
-import org.apache.sentry.provider.db.service.thrift.SentryPolicyServiceClientDefaultImpl;
+import org.apache.sentry.provider.db.service.thrift.SentryPolicyServiceBaseClient;
+import org.apache.sentry.service.thrift.ServiceConstants;
 import org.apache.sentry.service.thrift.ServiceConstants.ServerConfig;
+import org.apache.sentry.service.thrift.factory.SentryClientInvocationHandler;
+import org.apache.sentry.service.thrift.factory.SentryServiceClientFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
-public class HAClientInvocationHandler implements InvocationHandler {
+
+/**
+ * HAClientInvocationHandler is the InvocationHandler for high availability.
+ */
+public class HAClientInvocationHandler<T extends SentryPolicyServiceBaseClient> implements SentryClientInvocationHandler<T> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(HAClientInvocationHandler.class);
 
   private final Configuration conf;
   private final ServiceManager manager;
   private ServiceInstance<Void> currentServiceInstance;
-  private SentryPolicyServiceClient client = null;
+  private SentryPolicyServiceBaseClient client = null;
+  private SentryServiceClientFactory<T> factory;
+  private HAContext haContext;
 
   private static final String THRIFT_EXCEPTION_MESSAGE = "Thrift exception occured ";
 
-  public HAClientInvocationHandler(Configuration conf) throws Exception {
+  public HAClientInvocationHandler(Configuration conf, SentryServiceClientFactory<T> factory) throws Exception {
     this.conf = conf;
-    manager = new ServiceManager(new HAContext(conf));
+    this.haContext = new HAContext(conf);
+    this.manager = new ServiceManager(this.haContext);
+    this.factory = factory;
     checkClientConf();
     renewSentryClient();
   }
@@ -100,9 +108,9 @@ public class HAClientInvocationHandler implements InvocationHandler {
       conf.set(ServiceConstants.ClientConfig.SERVER_RPC_ADDRESS, serverAddress.getHostName());
       conf.setInt(ServiceConstants.ClientConfig.SERVER_RPC_PORT, serverAddress.getPort());
       try {
-        client = new SentryPolicyServiceClientDefaultImpl(conf);
+        client = factory.getSentryPolicyClient();
         break;
-      } catch (IOException e) {
+      } catch (Exception e) {
         manager.reportError(currentServiceInstance);
         LOGGER.info("Transport exception while opening transport:", e, e.getMessage());
       }
@@ -116,6 +124,17 @@ public class HAClientInvocationHandler implements InvocationHandler {
           ServerConfig.PRINCIPAL + " is required");
       Preconditions.checkArgument(serverPrincipal.contains(SecurityUtil.HOSTNAME_PATTERN),
           ServerConfig.PRINCIPAL + " : " + serverPrincipal + " should contain " + SecurityUtil.HOSTNAME_PATTERN);
+    }
+  }
+
+  @Override
+  public void close() {
+    if (haContext != null) {
+      try {
+        haContext.close();
+      } catch (Exception e) {
+        LOGGER.debug("Error in close: ",e);
+      }
     }
   }
 }

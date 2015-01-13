@@ -26,7 +26,7 @@ import org.apache.sentry.SentryUserException;
 import org.apache.sentry.core.common.ActiveRoleSet;
 import org.apache.sentry.core.common.Authorizable;
 
-public interface SentryPolicyServiceClient {
+public interface SentryPolicyServiceClient extends SentryPolicyServiceBaseClient {
 
   public void createRole(String requestorUserName, String roleName) throws SentryUserException;
 
@@ -168,5 +168,4 @@ public interface SentryPolicyServiceClient {
    */
   public String getConfigValue(String propertyName, String defaultValue) throws SentryUserException;
 
-  public void close();
 }

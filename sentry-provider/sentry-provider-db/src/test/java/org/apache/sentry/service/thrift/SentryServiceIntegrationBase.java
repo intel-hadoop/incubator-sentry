@@ -70,6 +70,7 @@ public abstract class SentryServiceIntegrationBase extends SentryMiniKdcTestcase
   protected static final String ADMIN_GROUP = "admin_group";
 
   protected SentryService server;
+  protected SentryServicePolicyClientFactory clientFactory;
   protected SentryPolicyServiceClient client;
   protected MiniKdc kdc;
   protected File kdcWorkDir;
@@ -163,6 +164,7 @@ public abstract class SentryServiceIntegrationBase extends SentryMiniKdcTestcase
     // therefore we must manually login in the integration tests
     if (kerberos) {
       conf.set(ServerConfig.SECURITY_USE_UGI_TRANSPORT, "false");
+      clientFactory = new SentryServicePolicyClientFactory(conf);
       clientSubject = new Subject(false, Sets.newHashSet(
           new KerberosPrincipal(CLIENT_KERBEROS_NAME)), new HashSet<Object>(),
         new HashSet<Object>());
@@ -173,11 +175,12 @@ public abstract class SentryServiceIntegrationBase extends SentryMiniKdcTestcase
       client = Subject.doAs(clientSubject, new PrivilegedExceptionAction<SentryPolicyServiceClient>() {
         @Override
         public SentryPolicyServiceClient run() throws Exception {
-          return SentryServiceClientFactory.create(conf);
+          return clientFactory.getSentryPolicyClient();
         }
       });
     } else {
-      client = SentryServiceClientFactory.create(conf);
+      clientFactory = new SentryServicePolicyClientFactory(conf);
+      client = clientFactory.getSentryPolicyClient();
     }
   }
 
@@ -186,6 +189,9 @@ public abstract class SentryServiceIntegrationBase extends SentryMiniKdcTestcase
     beforeTeardown();
     if(client != null) {
       client.close();
+    }
+    if (clientFactory != null) {
+      clientFactory.close();
     }
     if(clientLoginContext != null) {
       try {

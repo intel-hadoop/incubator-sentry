@@ -76,7 +76,7 @@ import org.apache.sentry.provider.db.service.thrift.SentryPolicyServiceClient;
 import org.apache.sentry.provider.db.service.thrift.TSentryGrantOption;
 import org.apache.sentry.provider.db.service.thrift.TSentryPrivilege;
 import org.apache.sentry.provider.db.service.thrift.TSentryRole;
-import org.apache.sentry.service.thrift.SentryServiceClientFactory;
+import org.apache.sentry.service.thrift.SentryServicePolicyClientFactory;
 import org.apache.sentry.service.thrift.ServiceConstants.PrivilegeScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,6 +97,7 @@ public class SentryGrantRevokeTask extends Task<DDLWork> implements Serializable
   private static final int terminator = Utilities.newLineCode;
   private static final long serialVersionUID = -7625118066790571999L;
 
+  private SentryServicePolicyClientFactory clientFactory;
   private SentryPolicyServiceClient sentryClient;
   private HiveConf conf;
   private HiveAuthzBinding hiveAuthzBinding;
@@ -117,7 +118,7 @@ public class SentryGrantRevokeTask extends Task<DDLWork> implements Serializable
   public int execute(DriverContext driverContext) {
     try {
       try {
-        this.sentryClient = SentryServiceClientFactory.create(authzConf);
+        this.sentryClient = clientFactory.getSentryPolicyClient();
       } catch (Exception e) {
         String msg = "Error creating Sentry client: " + e.getMessage();
         throw new RuntimeException(msg, e);
@@ -178,6 +179,9 @@ public class SentryGrantRevokeTask extends Task<DDLWork> implements Serializable
       if (sentryClient != null) {
         sentryClient.close();
       }
+      if (clientFactory != null) {
+        clientFactory.close();
+      }
     }
   }
 
@@ -185,7 +189,9 @@ public class SentryGrantRevokeTask extends Task<DDLWork> implements Serializable
     Preconditions.checkState(this.authzConf == null,
         "setAuthzConf should only be called once: " + this.authzConf);
     this.authzConf = authzConf;
+    this.clientFactory = new SentryServicePolicyClientFactory(authzConf);
   }
+
   public void setHiveAuthzBinding(HiveAuthzBinding hiveAuthzBinding) {
     Preconditions.checkState(this.hiveAuthzBinding == null,
         "setHiveAuthzBinding should only be called once: " + this.hiveAuthzBinding);

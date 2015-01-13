@@ -180,4 +180,8 @@ public class HAContext {
         return saslACL;
     }
   }
+
+  public void close() {
+    curatorFramework.close();
+  }
 }
