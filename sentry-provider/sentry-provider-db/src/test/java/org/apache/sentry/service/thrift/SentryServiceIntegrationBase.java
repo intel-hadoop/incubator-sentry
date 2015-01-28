@@ -96,9 +96,12 @@ public abstract class SentryServiceIntegrationBase extends SentryMiniKdcTestcase
   protected int webServerPort = ServerConfig.SENTRY_WEB_PORT_DEFAULT;
   protected boolean webSecurity = false;
 
+  protected boolean pooled = false;
+
   @Before
   public void setup() throws Exception {
     this.kerberos = true;
+    this.pooled = true;
     beforeSetup();
     setupConf();
     startSentryService();
@@ -119,6 +122,11 @@ public abstract class SentryServiceIntegrationBase extends SentryMiniKdcTestcase
         throw new TimeoutException("Server did not start after 60 seconds");
       }
     }
+  }
+
+  public void stopSentryService() throws Exception {
+    server.stop();
+    Thread.sleep(30000);
   }
 
   public void setupConf() throws Exception {
@@ -163,7 +171,9 @@ public abstract class SentryServiceIntegrationBase extends SentryMiniKdcTestcase
     } else {
       conf.set(ServerConfig.SENTRY_WEB_ENABLE, "false");
     }
-
+    if (pooled) {
+      conf.set(ClientConfig.SENTRY_POOL_ENABLED, "true");
+    }
     conf.set(ServerConfig.SENTRY_VERIFY_SCHEM_VERSION, "false");
     conf.set(ServerConfig.ADMIN_GROUPS, ADMIN_GROUP);
     conf.set(ServerConfig.RPC_ADDRESS, SERVER_HOST);

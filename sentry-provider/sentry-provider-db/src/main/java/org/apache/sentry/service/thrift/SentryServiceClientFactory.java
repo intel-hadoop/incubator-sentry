@@ -24,7 +24,7 @@ import org.apache.hadoop.conf.Configuration;
 
 import org.apache.sentry.provider.db.service.thrift.SentryPolicyServiceClient;
 import org.apache.sentry.provider.db.service.thrift.SentryPolicyServiceClientDefaultImpl;
-import org.apache.sentry.service.thrift.ServiceConstants.ServerConfig;
+import org.apache.sentry.service.thrift.ServiceConstants.ClientConfig;
 
 public class SentryServiceClientFactory {
 
@@ -32,12 +32,18 @@ public class SentryServiceClientFactory {
   }
 
   public static SentryPolicyServiceClient create(Configuration conf) throws Exception {
-    boolean haEnabled = conf.getBoolean(ServerConfig.SENTRY_HA_ENABLED, false);
-    if (haEnabled) {
+    boolean haEnabled = conf.getBoolean(ClientConfig.SERVER_HA_ENABLED, false);
+    boolean pooled = conf.getBoolean(ClientConfig.SENTRY_POOL_ENABLED, false);
+    if (pooled) {
       return (SentryPolicyServiceClient) Proxy
           .newProxyInstance(SentryPolicyServiceClientDefaultImpl.class.getClassLoader(),
               SentryPolicyServiceClientDefaultImpl.class.getInterfaces(),
-              new HAClientInvocationHandler(conf));
+              new PoolClientInvocationHandler<SentryPolicyServiceClient>(conf, SentryServiceClientFactory.class));
+    } else if (haEnabled) {
+      return (SentryPolicyServiceClient) Proxy
+          .newProxyInstance(SentryPolicyServiceClientDefaultImpl.class.getClassLoader(),
+              SentryPolicyServiceClientDefaultImpl.class.getInterfaces(),
+              new HAClientInvocationHandler<SentryPolicyServiceClient>(conf, SentryServiceClientFactory.class));
     } else {
       return new SentryPolicyServiceClientDefaultImpl(conf);
     }

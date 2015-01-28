@@ -22,9 +22,10 @@ import java.util.Map;
 
 import javax.security.sasl.Sasl;
 
+import org.apache.sentry.provider.db.service.thrift.SentryMetrics;
+
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
-import org.apache.sentry.provider.db.service.thrift.SentryMetrics;
 
 public class ServiceConstants {
 
@@ -175,10 +176,26 @@ public class ServiceConstants {
     // HA configuration
     public static final String SERVER_HA_ENABLED = "sentry.ha.enabled";
     public static final boolean SERVER_HA_ENABLED_DEFAULT = ServerConfig.SENTRY_HA_ENABLED_DEFAULT;
-    public static final String SENTRY_HA_ZOOKEEPER_QUORUM = ServerConfig.SENTRY_HA_ZOOKEEPER_QUORUM;
+    public static final String SERVER_HA_ZOOKEEPER_QUORUM = ServerConfig.SENTRY_HA_ZOOKEEPER_QUORUM;
     public static final String SERVER_HA_ZOOKEEPER_QUORUM_DEFAULT = ServerConfig.SENTRY_HA_ZOOKEEPER_QUORUM_DEFAULT;
-    public static final String SENTRY_HA_ZOOKEEPER_NAMESPACE = ServerConfig.SENTRY_HA_ZOOKEEPER_NAMESPACE;
+    public static final String SERVER_HA_ZOOKEEPER_NAMESPACE = ServerConfig.SENTRY_HA_ZOOKEEPER_NAMESPACE;
     public static final String SERVER_HA_ZOOKEEPER_NAMESPACE_DEFAULT = ServerConfig.SENTRY_HA_ZOOKEEPER_NAMESPACE_DEFAULT;
+
+    // connection pool configuration
+    public static final String SENTRY_POOL_ENABLED = "sentry.service.client.connection.pool.enabled";
+    public static final boolean SENTRY_POOL_ENABLED_DEFAULT = false;
+
+    // commons-pool configuration for pool size
+    public static final String SENTRY_POOL_MAX_TOTAL = "sentry.service.client.connection.pool.max-total";
+    public static final int SENTRY_POOL_MAX_TOTAL_DEFAULT = 8;
+    public static final String SENTRY_POOL_MAX_IDLE = "sentry.service.client.connection.pool.max-idle";
+    public static final int SENTRY_POOL_MAX_IDLE_DEFAULT = 8;
+    public static final String SENTRY_POOL_MIN_IDLE = "sentry.service.client.connection.pool.min-idle";
+    public static final int SENTRY_POOL_MIN_IDLE_DEFAULT = 0;
+
+    // retry num for getting the connection from connection pool
+    public static final String SENTRY_POOL_RETRY_TOTAL = "sentry.service.client.connection.pool.retry-total";
+    public static final int SENTRY_POOL_RETRY_TOTAL_DEFAULT = 3;
   }
 
   /**

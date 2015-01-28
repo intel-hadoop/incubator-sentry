@@ -18,7 +18,6 @@
 package org.apache.sentry.service.thrift;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
@@ -30,41 +29,42 @@ import org.apache.curator.x.discovery.ServiceInstance;
 import org.apache.sentry.SentryUserException;
 import org.apache.sentry.provider.db.service.persistent.HAContext;
 import org.apache.sentry.provider.db.service.persistent.ServiceManager;
+import org.apache.sentry.provider.db.service.thrift.SentryPolicyServiceBaseClient;
 import org.apache.sentry.provider.db.service.thrift.SentryPolicyServiceClient;
 import org.apache.sentry.provider.db.service.thrift.SentryPolicyServiceClientDefaultImpl;
+import org.apache.sentry.service.thrift.ServiceConstants.ClientConfig;
 import org.apache.sentry.service.thrift.ServiceConstants.ServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
-public class HAClientInvocationHandler implements InvocationHandler {
+public class HAClientInvocationHandler<T extends SentryPolicyServiceBaseClient> extends SentryClientInvocationHandler {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(HAClientInvocationHandler.class);
 
   private final Configuration conf;
   private final ServiceManager manager;
   private ServiceInstance<Void> currentServiceInstance;
-  private SentryPolicyServiceClient client = null;
+  private T client = null;
+  private Class<?> factoryClass;
 
   private static final String THRIFT_EXCEPTION_MESSAGE = "Thrift exception occured ";
 
-  public HAClientInvocationHandler(Configuration conf) throws Exception {
+  public HAClientInvocationHandler(Configuration conf, Class<?> factoryClass) throws Exception {
     this.conf = conf;
+    this.factoryClass = factoryClass;
     manager = new ServiceManager(new HAContext(conf));
     checkClientConf();
     renewSentryClient();
   }
 
   @Override
-  public Object invoke(Object proxy, Method method, Object[] args) throws
+  public Object invokeImpl(Object proxy, Method method, Object[] args) throws
       SentryUserException {
     Object result = null;
     while (true) {
       try {
-        if (!method.isAccessible()) {
-          method.setAccessible(true);
-        }
         result = method.invoke(client, args);
       } catch (IllegalAccessException e) {
         throw new SentryUserException(e.getMessage(), e.getCause());
@@ -100,11 +100,19 @@ public class HAClientInvocationHandler implements InvocationHandler {
       conf.set(ServiceConstants.ClientConfig.SERVER_RPC_ADDRESS, serverAddress.getHostName());
       conf.setInt(ServiceConstants.ClientConfig.SERVER_RPC_PORT, serverAddress.getPort());
       try {
-        client = new SentryPolicyServiceClientDefaultImpl(conf);
+        conf.set(ClientConfig.SERVER_HA_ENABLED, "false");
+        Method m = factoryClass.getMethod("create", new Class[] {Configuration.class});
+        client = (T) m.invoke(factoryClass, conf);
         break;
-      } catch (IOException e) {
-        manager.reportError(currentServiceInstance);
-        LOGGER.info("Transport exception while opening transport:", e, e.getMessage());
+      } catch (InvocationTargetException e) {
+        if (e.getTargetException() instanceof IOException) {
+          manager.reportError(currentServiceInstance);
+          LOGGER.info("Transport exception while opening transport:", e, e.getMessage());
+        } else {
+          throw new IllegalArgumentException(e);
+        }
+      } catch (Exception e) {
+        throw new IllegalArgumentException(e);
       }
     }
   }
@@ -116,6 +124,13 @@ public class HAClientInvocationHandler implements InvocationHandler {
           ServerConfig.PRINCIPAL + " is required");
       Preconditions.checkArgument(serverPrincipal.contains(SecurityUtil.HOSTNAME_PATTERN),
           ServerConfig.PRINCIPAL + " : " + serverPrincipal + " should contain " + SecurityUtil.HOSTNAME_PATTERN);
+    }
+  }
+
+  @Override
+  public void close() {
+    if (client != null) {
+      client.close();
     }
   }
 }
