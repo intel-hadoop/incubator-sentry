@@ -26,6 +26,7 @@ import org.apache.sentry.core.common.ActiveRoleSet;
 import org.apache.sentry.core.common.Authorizable;
 import org.apache.sentry.core.common.SentryConfigurationException;
 import org.apache.sentry.core.common.Subject;
+import org.apache.sentry.policy.common.PolicyEngine;
 
 /**
  * Implementations of AuthorizationProvider must be threadsafe.
@@ -49,6 +50,23 @@ public interface AuthorizationProvider {
    */
   public boolean hasAccess(Subject subject, List<? extends Authorizable> authorizableHierarchy,
       Set<? extends Action> actions, ActiveRoleSet roleSet);
+
+  /***
+   * Returns validate subject privileges on given Authorizable object
+   *
+   * @param subject: UserID to validate privileges
+   * @param authorizableHierarchy : List of object according to namespace hierarchy.
+   *        eg. Server->Db->Table or Server->Function
+   *        The privileges will be validated from the higher to lower scope
+   * @param actions : Privileges to validate
+   * @param roleSet : Roles which should be used when obtaining privileges
+   * @param providedPrivileges : The privileges has been assigned to the subject
+   * @return
+   *        True if the subject is authorized to perform requested action on the given object
+   */
+  public boolean hasAccessWithPrivileges(Subject subject,
+      List<? extends Authorizable> authorizableHierarchy, Set<? extends Action> actions,
+      ActiveRoleSet roleSet, Set<String> providedPrivileges);
 
   /***
    * Get the GroupMappingService used by the AuthorizationProvider
@@ -90,4 +108,9 @@ public interface AuthorizationProvider {
    * Frees any resources held by the the provider
    */
   public void close();
+
+  /**
+   * Get the policy engine
+   */
+  public PolicyEngine getPolicyEngine();
 }

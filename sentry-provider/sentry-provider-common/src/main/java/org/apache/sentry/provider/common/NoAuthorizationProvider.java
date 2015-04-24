@@ -26,6 +26,7 @@ import org.apache.sentry.core.common.ActiveRoleSet;
 import org.apache.sentry.core.common.Authorizable;
 import org.apache.sentry.core.common.SentryConfigurationException;
 import org.apache.sentry.core.common.Subject;
+import org.apache.sentry.policy.common.PolicyEngine;
 
 public class NoAuthorizationProvider implements AuthorizationProvider {
   private GroupMappingService noGroupMappingService = new NoGroupMappingService();
@@ -33,6 +34,13 @@ public class NoAuthorizationProvider implements AuthorizationProvider {
   @Override
   public boolean hasAccess(Subject subject, List<? extends Authorizable> authorizableHierarchy,
       Set<? extends Action> actions, ActiveRoleSet roleSet) {
+    return false;
+  }
+
+  @Override
+  public boolean hasAccessWithPrivileges(Subject subject,
+      List<? extends Authorizable> authorizableHierarchy, Set<? extends Action> actions,
+      ActiveRoleSet roleSet, Set<String> providedPrivileges) {
     return false;
   }
 
@@ -66,5 +74,9 @@ public class NoAuthorizationProvider implements AuthorizationProvider {
   @Override
   public void close() {
 
+  }
+
+  public PolicyEngine getPolicyEngine() {
+    return null;
   }
 }

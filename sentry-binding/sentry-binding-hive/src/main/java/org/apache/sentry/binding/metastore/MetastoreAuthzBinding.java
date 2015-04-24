@@ -402,9 +402,8 @@ public class MetastoreAuthzBinding extends MetaStorePreEventListener {
     }
     try {
       HiveAuthzBinding hiveAuthzBinding = getHiveAuthzBinding();
-      hiveAuthzBinding.authorize(hiveOp, HiveAuthzPrivilegesMap
-          .getHiveAuthzPrivileges(hiveOp), new Subject(getUserName()),
-          inputHierarchy, outputHierarchy);
+      hiveAuthzBinding.authorize(hiveOp, HiveAuthzPrivilegesMap.getHiveAuthzPrivileges(hiveOp),
+          new Subject(getUserName()), inputHierarchy, outputHierarchy, null);
     } catch (AuthorizationException e1) {
       throw invalidOperationException(e1);
     } catch (LoginException e1) {

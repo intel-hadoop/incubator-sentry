@@ -62,6 +62,7 @@ import org.apache.sentry.core.model.db.DBModelAuthorizable;
 import org.apache.sentry.core.model.db.DBModelAuthorizable.AuthorizableType;
 import org.apache.sentry.core.model.db.Database;
 import org.apache.sentry.core.model.db.Table;
+import org.apache.sentry.provider.common.AuthorizationProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -514,7 +515,7 @@ public class HiveAuthzBindingHook extends AbstractSemanticAnalyzerHook {
 
     // validate permission
     hiveAuthzBinding.authorize(stmtOperation, stmtAuthObject, getCurrentSubject(context),
-        inputHierarchy, outputHierarchy);
+        inputHierarchy, outputHierarchy, null);
   }
 
   private boolean isUDF(ReadEntity readEntity) {
@@ -667,6 +668,15 @@ public class HiveAuthzBindingHook extends AbstractSemanticAnalyzerHook {
     return false;
   }
 
+  private static Set<String> getProvidedPrivileges(HiveAuthzBinding hiveAuthzBinding,
+      String userName) {
+    AuthorizationProvider authProvider = hiveAuthzBinding.getCurrentAuthProvider();
+    Set<String> providedPrivileges = authProvider.getPolicyEngine().getPrivileges(
+        authProvider.getGroupMapping().getGroups(userName), hiveAuthzBinding.getActiveRoleSet(),
+        hiveAuthzBinding.getAuthServer());
+    return providedPrivileges;
+  }
+
   public static List<String> filterShowTables(
       HiveAuthzBinding hiveAuthzBinding, List<String> queryResult,
       HiveOperation operation, String userName, String dbName)
@@ -678,6 +688,8 @@ public class HiveAuthzBindingHook extends AbstractSemanticAnalyzerHook {
         setOperationScope(HiveOperationScope.TABLE).
         setOperationType(HiveOperationType.INFO).
         build();
+
+    Set<String> providedPrivileges = getProvidedPrivileges(hiveAuthzBinding, userName);
 
     for (String tableName : queryResult) {
       // if user has privileges on table, add to filtered list, else discard
@@ -695,8 +707,8 @@ public class HiveAuthzBindingHook extends AbstractSemanticAnalyzerHook {
       inputHierarchy.add(externalAuthorizableHierarchy);
 
       try {
-        hiveAuthzBinding.authorize(operation, tableMetaDataPrivilege, subject,
-            inputHierarchy, outputHierarchy);
+        hiveAuthzBinding.authorize(operation, tableMetaDataPrivilege, subject, inputHierarchy,
+            outputHierarchy, providedPrivileges);
         filteredResult.add(table.getName());
       } catch (AuthorizationException e) {
         // squash the exception, user doesn't have privileges, so the table is
@@ -720,16 +732,16 @@ public class HiveAuthzBindingHook extends AbstractSemanticAnalyzerHook {
         setOperationType(HiveOperationType.QUERY).
         build();
 
+    Set<String> providedPrivileges = getProvidedPrivileges(hiveAuthzBinding, userName);
+
     for (String dbName:queryResult) {
       // if user has privileges on database, add to filtered list, else discard
       Database database = null;
 
       // if default is not restricted, continue
-      if (DEFAULT_DATABASE_NAME.equalsIgnoreCase(dbName) &&
- "false".equalsIgnoreCase(
-hiveAuthzBinding.getAuthzConf().get(
-              HiveAuthzConf.AuthzConfVars.AUTHZ_RESTRICT_DEFAULT_DB.getVar(),
-              "false"))) {
+      if (DEFAULT_DATABASE_NAME.equalsIgnoreCase(dbName)
+          && "false".equalsIgnoreCase(hiveAuthzBinding.getAuthzConf().get(
+              HiveAuthzConf.AuthzConfVars.AUTHZ_RESTRICT_DEFAULT_DB.getVar(), "false"))) {
         filteredResult.add(DEFAULT_DATABASE_NAME);
         continue;
       }
@@ -746,8 +758,8 @@ hiveAuthzBinding.getAuthzConf().get(
       inputHierarchy.add(externalAuthorizableHierarchy);
 
       try {
-        hiveAuthzBinding.authorize(operation, anyPrivilege, subject,
-            inputHierarchy, outputHierarchy);
+        hiveAuthzBinding.authorize(operation, anyPrivilege, subject, inputHierarchy,
+            outputHierarchy, providedPrivileges);
         filteredResult.add(database.getName());
       } catch (AuthorizationException e) {
         // squash the exception, user doesn't have privileges, so the table is

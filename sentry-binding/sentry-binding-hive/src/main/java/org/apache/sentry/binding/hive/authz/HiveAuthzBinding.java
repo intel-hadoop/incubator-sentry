@@ -22,7 +22,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.hadoop.conf.Configuration;
@@ -31,7 +30,6 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.ql.metadata.AuthorizationException;
 import org.apache.hadoop.hive.ql.plan.HiveOperation;
-import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.sentry.SentryUserException;
 import org.apache.sentry.binding.hive.conf.HiveAuthzConf;
 import org.apache.sentry.binding.hive.conf.HiveAuthzConf.AuthzConfVars;
@@ -233,7 +231,7 @@ public class HiveAuthzBinding {
    */
   public void authorize(HiveOperation hiveOp, HiveAuthzPrivileges stmtAuthPrivileges,
       Subject subject, List<List<DBModelAuthorizable>> inputHierarchyList,
-      List<List<DBModelAuthorizable>> outputHierarchyList)
+      List<List<DBModelAuthorizable>> outputHierarchyList, Set<String> providedPrivileges)
           throws AuthorizationException {
     if (!open) {
       throw new IllegalStateException("Binding has been closed");
@@ -266,51 +264,47 @@ public class HiveAuthzBinding {
       LOG.debug("outputHierarchyList = " + outputHierarchyList);
     }
 
-    boolean found = false;
-    for(AuthorizableType key: requiredInputPrivileges.keySet()) {
-      for (List<DBModelAuthorizable> inputHierarchy : inputHierarchyList) {
-        if (getAuthzType(inputHierarchy).equals(key)) {
-          found = true;
-          if (!authProvider.hasAccess(subject, inputHierarchy, requiredInputPrivileges.get(key), activeRoleSet)) {
-            throw new AuthorizationException("User " + subject.getName() +
-                " does not have privileges for " + hiveOp.name());
-          }
-        }
-      }
-      if(!found && !(key.equals(AuthorizableType.URI)) &&  !(hiveOp.equals(HiveOperation.QUERY))
-          && !(hiveOp.equals(HiveOperation.CREATETABLE_AS_SELECT))) {
-        //URI privileges are optional for some privileges: anyPrivilege, tableDDLAndOptionalUriPrivilege
-        //Query can mean select/insert/analyze where all of them have different required privileges.
-        //CreateAsSelect can has table/columns privileges with select.
-        //For these alone we skip if there is no equivalent input privilege
-        //TODO: Even this case should be handled to make sure we do not skip the privilege check if we did not build
-        //the input privileges correctly
-        throw new AuthorizationException("Required privilege( " + key.name() + ") not available in input privileges");
-      }
-      found = false;
-    }
+    doAuthorize(subject, hiveOp, requiredInputPrivileges, inputHierarchyList, providedPrivileges,
+        true);
+    doAuthorize(subject, hiveOp, requiredOutputPrivileges, outputHierarchyList, providedPrivileges,
+        false);
+  }
 
-    for(AuthorizableType key: requiredOutputPrivileges.keySet()) {
-      for (List<DBModelAuthorizable> outputHierarchy : outputHierarchyList) {
-        if (getAuthzType(outputHierarchy).equals(key)) {
+  private void doAuthorize(Subject subject, HiveOperation hiveOp,
+      Map<AuthorizableType, EnumSet<DBModelAction>> requiredPrivileges,
+      List<List<DBModelAuthorizable>> hierarchyList, Set<String> providedPrivileges,
+      boolean isInputAuth) throws AuthorizationException {
+    boolean found = false;
+    for (AuthorizableType key : requiredPrivileges.keySet()) {
+      for (List<DBModelAuthorizable> hierarchy : hierarchyList) {
+        if (getAuthzType(hierarchy).equals(key)) {
           found = true;
-          if (!authProvider.hasAccess(subject, outputHierarchy, requiredOutputPrivileges.get(key), activeRoleSet)) {
+          boolean authAccess = false;
+          if (providedPrivileges == null || providedPrivileges.isEmpty()) {
+            authAccess = authProvider.hasAccess(subject, hierarchy, requiredPrivileges.get(key),
+                activeRoleSet);
+          } else {
+            authAccess = authProvider.hasAccessWithPrivileges(subject, hierarchy,
+                requiredPrivileges.get(key), activeRoleSet, providedPrivileges);
+          }
+          if (!authAccess) {
             throw new AuthorizationException("User " + subject.getName() +
                 " does not have privileges for " + hiveOp.name());
           }
         }
       }
-      if(!found && !(key.equals(AuthorizableType.URI)) &&  !(hiveOp.equals(HiveOperation.QUERY))) {
+      if (!found && !(key.equals(AuthorizableType.URI)) && !(hiveOp.equals(HiveOperation.QUERY))
+          && (!isInputAuth || !(hiveOp.equals(HiveOperation.CREATETABLE_AS_SELECT)))) {
         //URI privileges are optional for some privileges: tableInsertPrivilege
         //Query can mean select/insert/analyze where all of them have different required privileges.
         //For these alone we skip if there is no equivalent output privilege
         //TODO: Even this case should be handled to make sure we do not skip the privilege check if we did not build
         //the output privileges correctly
-        throw new AuthorizationException("Required privilege( " + key.name() + ") not available in output privileges");
+        throw new AuthorizationException("Required privilege( " + key.name()
+            + ") not available in privileges");
       }
       found = false;
     }
-
   }
 
   public void setActiveRoleSet(String activeRoleSet,
@@ -351,5 +345,9 @@ public class HiveAuthzBinding {
 
   public void close() {
     authProvider.close();
+  }
+
+  public AuthorizationProvider getCurrentAuthProvider() {
+    return authProvider;
   }
 }

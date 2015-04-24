@@ -78,6 +78,21 @@ public abstract class ResourceAuthorizationProvider implements AuthorizationProv
   @Override
   public boolean hasAccess(Subject subject, List<? extends Authorizable> authorizableHierarchy,
       Set<? extends Action> actions, ActiveRoleSet roleSet) {
+    checkPreAuthorization(subject, authorizableHierarchy, actions, roleSet);
+    return doHasAccess(subject, authorizableHierarchy, actions, roleSet, null);
+  }
+
+  @Override
+  public boolean hasAccessWithPrivileges(Subject subject,
+      List<? extends Authorizable> authorizableHierarchy, Set<? extends Action> actions,
+      ActiveRoleSet roleSet, Set<String> providedPrivileges) {
+    checkPreAuthorization(subject, authorizableHierarchy, actions, roleSet);
+    return doHasAccess(subject, authorizableHierarchy, actions, roleSet, providedPrivileges);
+  }
+
+  private void checkPreAuthorization(Subject subject,
+      List<? extends Authorizable> authorizableHierarchy, Set<? extends Action> actions,
+      ActiveRoleSet roleSet) {
     if(LOGGER.isDebugEnabled()) {
       LOGGER.debug("Authorization Request for " + subject + " " +
           authorizableHierarchy + " and " + actions);
@@ -88,19 +103,27 @@ public abstract class ResourceAuthorizationProvider implements AuthorizationProv
     Preconditions.checkNotNull(actions, "Actions cannot be null");
     Preconditions.checkArgument(!actions.isEmpty(), "Actions cannot be empty");
     Preconditions.checkNotNull(roleSet, "ActiveRoleSet cannot be null");
-    return doHasAccess(subject, authorizableHierarchy, actions, roleSet);
   }
 
-  private boolean doHasAccess(Subject subject,
-      List<? extends Authorizable> authorizables, Set<? extends Action> actions,
-      ActiveRoleSet roleSet) {
+  private boolean doHasAccess(Subject subject, List<? extends Authorizable> authorizables,
+      Set<? extends Action> actions, ActiveRoleSet roleSet, Set<String> providedPrivileges) {
     Set<String> groups =  getGroups(subject);
     Set<String> hierarchy = new HashSet<String>();
     for (Authorizable authorizable : authorizables) {
       hierarchy.add(KV_JOINER.join(authorizable.getTypeName(), authorizable.getName()));
     }
     List<String> requestPrivileges = buildPermissions(authorizables, actions);
-    Iterable<Privilege> privileges = getPrivileges(groups, roleSet, authorizables.toArray(new Authorizable[0]));
+    ImmutableSet<String> strPrivileges = null;
+    Authorizable[] authorizableServer = authorizables.toArray(new Authorizable[0]);
+    if (providedPrivileges == null || providedPrivileges.isEmpty()) {
+      strPrivileges = appendDefaultDBPriv(
+          policy.getPrivileges(groups, roleSet, authorizableServer), authorizableServer);
+    } else {
+      strPrivileges = appendDefaultDBPriv(ImmutableSet.copyOf(providedPrivileges),
+          authorizableServer);
+    }
+    Iterable<Privilege> privileges = getPrivileges(strPrivileges);
+
     lastFailedPrivileges.get().clear();
 
     for (String requestPrivilege : requestPrivileges) {
@@ -123,9 +146,8 @@ public abstract class ResourceAuthorizationProvider implements AuthorizationProv
     return false;
   }
 
-  private Iterable<Privilege> getPrivileges(Set<String> groups, ActiveRoleSet roleSet, Authorizable[] authorizables) {
-    return Iterables.transform(appendDefaultDBPriv(policy.getPrivileges(groups, roleSet, authorizables), authorizables),
-        new Function<String, Privilege>() {
+  private Iterable<Privilege> getPrivileges(ImmutableSet<String> strPrivileges) {
+    return Iterables.transform(strPrivileges, new Function<String, Privilege>() {
       @Override
       public Privilege apply(String privilege) {
         return privilegeFactory.createPrivilege(privilege);
@@ -209,5 +231,9 @@ public abstract class ResourceAuthorizationProvider implements AuthorizationProv
       requestedPermissions.add(requestPermission);
     }
     return requestedPermissions;
+  }
+
+  public PolicyEngine getPolicyEngine() {
+    return policy;
   }
 }
