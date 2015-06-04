@@ -94,7 +94,7 @@ limitations under the License.
     <objenesis.version>1.2</objenesis.version>
     <cglib.version>2.2</cglib.version>
     <commons-pool2.version>2.2</commons-pool2.version>
-    <sqoop.version>2.0.0-SNAPSHOT</sqoop.version>
+    <sqoop.version>1.99.6</sqoop.version>
   </properties>
 
   <dependencyManagement>
